@@ -48,8 +48,20 @@ func getAttribute(v interface{}, attribute []string) interface{} {
 
 		switch value.Kind() {
 		case reflect.Map:
-			mapValue := value.MapIndex(reflect.ValueOf(attr))
+			getMapValue := func(v reflect.Value, key string) (mapValue reflect.Value, invalidKeyValue bool) {
+				defer func() {
+					if e := recover(); e != nil {
+						invalidKeyValue = true
+					}
+				}()
+				return v.MapIndex(reflect.ValueOf(attr)), false
+			}
+
+			mapValue, invalidKeyType := getMapValue(value, attr)
 			if !mapValue.IsValid() {
+				if invalidKeyType {
+					return MapKeyNotString
+				}
 				return NotFound
 			}
 			v = mapValue.Interface()
