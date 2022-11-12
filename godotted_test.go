@@ -30,6 +30,135 @@ func mustParseDate(date string) time.Time {
 	return t
 }
 
+func TestGetAttribute(t *testing.T) {
+
+	testStruct := &Book{
+		Title: "El nombre de la rosa",
+		Year:  1980,
+		Author: Author{
+			Name:      "Umberto Eco",
+			BirthDate: mustParseDate("1932-07-05"),
+		},
+		Genres: []string{"Mystery", "Crime"},
+		Extra: map[interface{}]interface{}{
+			"foo": map[string]int{
+				"bar": 123,
+			},
+		},
+		Publication: Publication{
+			ISBN: "1234567890",
+		},
+	}
+
+	type args struct {
+		v         interface{}
+		attribute string
+	}
+	tests := []struct {
+		name string
+		args args
+		want interface{}
+	}{
+		{
+			name: "struct",
+			args: args{
+				v:         testStruct,
+				attribute: "Author",
+			},
+			want: Author{
+				Name:      "Umberto Eco",
+				BirthDate: mustParseDate("1932-07-05"),
+			},
+		},
+		{
+			name: "map 1",
+			args: args{
+				v:         testStruct,
+				attribute: "Extra.foo",
+			},
+			want: map[string]int{"bar": 123},
+		},
+		{
+			name: "map 2",
+			args: args{
+				v:         testStruct,
+				attribute: "Extra.foo.bar",
+			},
+			want: 123,
+		},
+		{
+			name: "slice",
+			args: args{
+				v:         testStruct,
+				attribute: "Genres[1]",
+			},
+			want: "Crime",
+		},
+		{
+			name: "slice root",
+			args: args{
+				v: []interface{}{
+					123,
+					map[string]interface{}{
+						"x": 1,
+						"y": 2,
+					},
+				},
+				attribute: "[1].x",
+			},
+			want: 1,
+		},
+		{
+			name: "not found",
+			args: args{
+				v:         testStruct,
+				attribute: "foo",
+			},
+			want: godotted.NotFound,
+		},
+		{
+			name: "invalid index",
+			args: args{
+				v:         testStruct,
+				attribute: "Genres[a]",
+			},
+			want: godotted.InvalidIndex,
+		},
+		{
+			name: "index out of range",
+			args: args{
+				v:         testStruct,
+				attribute: "Genres[2]",
+			},
+			want: godotted.IndexOutOfRange,
+		},
+		{
+			name: "negative index",
+			args: args{
+				v:         testStruct,
+				attribute: "Genres[-1]",
+			},
+			want: godotted.IndexOutOfRange,
+		},
+		{
+			name: "unexported",
+			args: args{
+				v:         testStruct,
+				attribute: "Author.BirthDate.wall",
+			},
+			want: godotted.Unexported,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := godotted.GetAttribute(tt.args.v, tt.args.attribute)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetAttributes() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestGetAttributes(t *testing.T) {
 	type args struct {
 		v          interface{}
