@@ -162,6 +162,47 @@ func TestGetAttributes(t *testing.T) {
 			},
 			want: map[string]interface{}{},
 		},
+		{
+			name: "pointer",
+			args: args{
+				v: &map[string]interface{}{
+					"w": &Book{
+						Title: "Rendezvous with Rama",
+						Year:  1972,
+					},
+					"x": 123,
+					"y": func() *string {
+						s := "foobar"
+						return &s
+					}(),
+					"z": func() *int {
+						return nil
+					}(),
+				},
+				attributes: []string{
+					"w",
+					"x",
+					"y",
+					"z",
+					"y.a",
+					"z.a",
+				},
+			},
+			want: map[string]interface{}{
+				"w": &Book{
+					Title: "Rendezvous with Rama",
+					Year:  1972,
+				},
+				"x": 123,
+				"y": func() *string {
+					s := "foobar"
+					return &s
+				}(),
+				"z": func() *int {
+					return nil
+				}(),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

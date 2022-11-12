@@ -44,6 +44,10 @@ func getAttributes(v interface{}, attributes []string, m map[string]interface{},
 	value := reflect.ValueOf(v)
 	vType := reflect.TypeOf(v)
 
+	if value.Kind() == reflect.Pointer {
+		value = value.Elem()
+	}
+
 	switch value.Kind() {
 	case reflect.Map:
 		// Get only the map keys given by attributes for early pruning
