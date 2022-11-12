@@ -12,6 +12,7 @@ const (
 	NotFound Resp = iota
 	InvalidIndex
 	IndexOutOfRange
+	MapKeyNotString
 	Unexported
 )
 
@@ -19,60 +20,60 @@ func GetAttribute(v interface{}, attribute string) interface{} {
 	attribute = strings.ReplaceAll(attribute, "[", ".")
 	attribute = strings.ReplaceAll(attribute, "]", "")
 	attribute = strings.TrimPrefix(attribute, ".")
-	return getAttribute(v, strings.Split(attribute, "."), 0)
+	return getAttribute(v, strings.Split(attribute, "."))
 }
 
-func getAttribute(v interface{}, attribute []string, index int) interface{} {
-	if index == len(attribute) {
-		return v
-	}
-
-	value := reflect.ValueOf(v)
-	vType := reflect.TypeOf(v)
-
-	if value.Kind() == reflect.Pointer {
-		value = value.Elem()
-		vType = vType.Elem()
-	}
-
-	switch value.Kind() {
-	case reflect.Map:
-		iter := value.MapRange()
-		for iter.Next() {
-			key, ok := iter.Key().Interface().(string) // Support for map[string] only
-			if !ok {
-				continue
-			}
-			if key != attribute[index] {
-				continue
-			}
-
-			return getAttribute(iter.Value().Interface(), attribute, index+1)
+func getAttribute(v interface{}, attribute []string) interface{} {
+	for i, attr := range attribute {
+		if i == len(attribute) {
+			return v
 		}
 
-	case reflect.Struct:
-		field, ok := vType.FieldByName(attribute[index])
-		if !ok {
+		value := reflect.ValueOf(v)
+		vType := reflect.TypeOf(v)
+
+		if value.Kind() == reflect.Pointer {
+			value = value.Elem()
+			vType = vType.Elem()
+		}
+
+		switch value.Kind() {
+		case reflect.Map:
+			mapValue := value.MapIndex(reflect.ValueOf(attr))
+			if !mapValue.IsValid() {
+				return NotFound
+			}
+			v = mapValue.Interface()
+			continue
+
+		case reflect.Struct:
+			field, ok := vType.FieldByName(attr)
+			if !ok {
+				return NotFound
+			}
+			if !field.IsExported() {
+				return Unexported
+			}
+
+			v = value.FieldByName(attr).Interface()
+
+		case reflect.Slice, reflect.Array:
+			sliceIndex, err := strconv.Atoi(attr)
+			if err != nil {
+				return InvalidIndex
+			}
+			if sliceIndex < 0 || sliceIndex >= value.Len() {
+				return IndexOutOfRange
+			}
+			field := value.Index(sliceIndex)
+			v = field.Interface()
+
+		default:
 			return NotFound
 		}
-		if !field.IsExported() {
-			return Unexported
-		}
-		return getAttribute(value.FieldByName(attribute[index]).Interface(), attribute, index+1)
-
-	case reflect.Slice, reflect.Array:
-		sliceIndex, err := strconv.Atoi(attribute[index])
-		if err != nil {
-			return InvalidIndex
-		}
-		if sliceIndex < 0 || sliceIndex >= value.Len() {
-			return IndexOutOfRange
-		}
-		field := value.Index(sliceIndex)
-		return getAttribute(field.Interface(), attribute, index+1)
 	}
 
-	return NotFound
+	return v
 }
 
 func GetAttributes(v interface{}, attributes []string) map[string]interface{} {
