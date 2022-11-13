@@ -6,12 +6,14 @@ import (
 	"strings"
 )
 
+type Fields map[string]interface{}
+
 func GetAttribute(v interface{}, attribute string) interface{} {
 	return getAttribute(v, strings.Split(attribute, "."))
 }
 
-func GetAttributes(v interface{}, attributes []string) map[string]interface{} {
-	m := make(map[string]interface{}, len(attributes))
+func GetAttributes(v interface{}, attributes []string) Fields {
+	m := make(Fields, len(attributes))
 
 	for _, attr := range attributes {
 		if _, ok := m[attr]; !ok {

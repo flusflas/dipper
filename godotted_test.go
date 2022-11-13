@@ -184,7 +184,7 @@ func TestGetAttributes(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want map[string]interface{}
+		want godotted.Fields
 	}{
 		{
 			name: "struct",
