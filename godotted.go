@@ -6,14 +6,18 @@ import (
 	"strings"
 )
 
-type Resp int
+type Error string
+
+func (e Error) Error() string {
+	return string(e)
+}
 
 const (
-	NotFound Resp = iota
-	InvalidIndex
-	IndexOutOfRange
-	MapKeyNotString
-	Unexported
+	ErrNotFound        Error = "field not found"
+	ErrInvalidIndex    Error = "invalid index"
+	ErrIndexOutOfRange Error = "index out of range"
+	ErrMapKeyNotString Error = "map key is not of string type"
+	ErrUnexported      Error = "field is unexported"
 )
 
 func GetAttribute(v interface{}, attribute string) interface{} {
@@ -60,9 +64,9 @@ func getAttribute(v interface{}, attribute []string) interface{} {
 			mapValue, invalidKeyType := getMapValue(value, attr)
 			if !mapValue.IsValid() {
 				if invalidKeyType {
-					return MapKeyNotString
+					return ErrMapKeyNotString
 				}
-				return NotFound
+				return ErrNotFound
 			}
 			v = mapValue.Interface()
 			continue
@@ -70,10 +74,10 @@ func getAttribute(v interface{}, attribute []string) interface{} {
 		case reflect.Struct:
 			field, ok := vType.FieldByName(attr)
 			if !ok {
-				return NotFound
+				return ErrNotFound
 			}
 			if !field.IsExported() {
-				return Unexported
+				return ErrUnexported
 			}
 
 			v = value.FieldByName(attr).Interface()
@@ -81,16 +85,16 @@ func getAttribute(v interface{}, attribute []string) interface{} {
 		case reflect.Slice, reflect.Array:
 			sliceIndex, err := strconv.Atoi(attr)
 			if err != nil {
-				return InvalidIndex
+				return ErrInvalidIndex
 			}
 			if sliceIndex < 0 || sliceIndex >= value.Len() {
-				return IndexOutOfRange
+				return ErrIndexOutOfRange
 			}
 			field := value.Index(sliceIndex)
 			v = field.Interface()
 
 		default:
-			return NotFound
+			return ErrNotFound
 		}
 	}
 

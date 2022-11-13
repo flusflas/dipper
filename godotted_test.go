@@ -100,7 +100,7 @@ func TestGetAttribute(t *testing.T) {
 				},
 				attribute: "bar.1",
 			},
-			want: godotted.MapKeyNotString,
+			want: godotted.ErrMapKeyNotString,
 		},
 		{
 			name: "slice",
@@ -130,7 +130,7 @@ func TestGetAttribute(t *testing.T) {
 				v:         testStruct,
 				attribute: "foo",
 			},
-			want: godotted.NotFound,
+			want: godotted.ErrNotFound,
 		},
 		{
 			name: "invalid index",
@@ -138,7 +138,7 @@ func TestGetAttribute(t *testing.T) {
 				v:         testStruct,
 				attribute: "Genres.a",
 			},
-			want: godotted.InvalidIndex,
+			want: godotted.ErrInvalidIndex,
 		},
 		{
 			name: "index out of range",
@@ -146,7 +146,7 @@ func TestGetAttribute(t *testing.T) {
 				v:         testStruct,
 				attribute: "Genres.2",
 			},
-			want: godotted.IndexOutOfRange,
+			want: godotted.ErrIndexOutOfRange,
 		},
 		{
 			name: "negative index",
@@ -154,7 +154,7 @@ func TestGetAttribute(t *testing.T) {
 				v:         testStruct,
 				attribute: "Genres.-1",
 			},
-			want: godotted.IndexOutOfRange,
+			want: godotted.ErrIndexOutOfRange,
 		},
 		{
 			name: "unexported",
@@ -162,7 +162,7 @@ func TestGetAttribute(t *testing.T) {
 				v:         testStruct,
 				attribute: "Author.BirthDate.wall",
 			},
-			want: godotted.Unexported,
+			want: godotted.ErrUnexported,
 		},
 	}
 	for _, tt := range tests {
@@ -221,10 +221,10 @@ func TestGetAttributes(t *testing.T) {
 					BirthDate: mustParseDate("1932-07-05"),
 				},
 				"Author.BirthDate":      mustParseDate("1932-07-05"),
-				"Name":                  godotted.NotFound,
+				"Name":                  godotted.ErrNotFound,
 				"Publication.ISBN":      "1234567890",
 				"Genres.1":              "Crime",
-				"Author.BirthDate.wall": godotted.Unexported,
+				"Author.BirthDate.wall": godotted.ErrUnexported,
 				"Extra.foo":             map[string]int{"bar": 123},
 			},
 		},
@@ -266,10 +266,10 @@ func TestGetAttributes(t *testing.T) {
 				"bar.1.1":         2000,
 				"bar.2.0.bye":     "adiós",
 				"bar.2.0.extra.2": 5.5,
-				"bar.3":           godotted.IndexOutOfRange,
-				"bar.2.1.1":       godotted.MapKeyNotString,
-				"foo.bar.value":   godotted.NotFound,
-				"foo.x":           godotted.NotFound,
+				"bar.3":           godotted.ErrIndexOutOfRange,
+				"bar.2.1.1":       godotted.ErrMapKeyNotString,
+				"foo.bar.value":   godotted.ErrNotFound,
+				"foo.x":           godotted.ErrNotFound,
 			},
 		},
 		{
@@ -302,7 +302,7 @@ func TestGetAttributes(t *testing.T) {
 				},
 			},
 			want: map[string]interface{}{
-				"foo": godotted.NotFound,
+				"foo": godotted.ErrNotFound,
 			},
 		},
 		{
@@ -355,8 +355,8 @@ func TestGetAttributes(t *testing.T) {
 				"z": func() *int {
 					return nil
 				}(),
-				"y.a": godotted.NotFound,
-				"z.a": godotted.NotFound,
+				"y.a": godotted.ErrNotFound,
+				"z.a": godotted.ErrNotFound,
 			},
 		},
 	}
