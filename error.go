@@ -1,5 +1,7 @@
 package godotted
 
+import "reflect"
+
 type FieldError string
 
 func (e FieldError) Error() string {
@@ -12,6 +14,15 @@ const (
 	ErrIndexOutOfRange FieldError = "index out of range"
 	ErrMapKeyNotString FieldError = "map key is not of string type"
 	ErrUnexported      FieldError = "field is unexported"
+)
+
+// pre-calculated reflect.Value of errors to increase performance
+var (
+	errNotFoundValue        = reflect.ValueOf(ErrNotFound)
+	errInvalidIndexValue    = reflect.ValueOf(ErrInvalidIndex)
+	errIndexOutOfRangeValue = reflect.ValueOf(ErrIndexOutOfRange)
+	errMapKeyNotStringValue = reflect.ValueOf(ErrMapKeyNotString)
+	errUnexportedValue      = reflect.ValueOf(ErrUnexported)
 )
 
 // IsFieldError returns true when the given error is a FieldError.

@@ -9,15 +9,28 @@ import (
 type Fields map[string]interface{}
 
 func Get(v interface{}, attribute string) interface{} {
-	attributes := strings.Split(attribute, ".")
+	return getReflectValue(v, strings.Split(attribute, ".")).Interface()
+}
+
+func GetMany(v interface{}, attributes []string) Fields {
+	m := make(Fields, len(attributes))
 
 	for _, attr := range attributes {
-		value := reflect.ValueOf(v)
-		vType := reflect.TypeOf(v)
+		if _, ok := m[attr]; !ok {
+			m[attr] = Get(v, attr)
+		}
+	}
 
-		if value.Kind() == reflect.Pointer {
+	return m
+}
+
+func getReflectValue(v interface{}, attributes []string) reflect.Value {
+	value := reflect.ValueOf(v)
+
+	for _, attr := range attributes {
+
+		if value.Kind() == reflect.Pointer || value.Kind() == reflect.Interface {
 			value = value.Elem()
-			vType = vType.Elem()
 		}
 
 		switch value.Kind() {
@@ -34,51 +47,39 @@ func Get(v interface{}, attribute string) interface{} {
 			mapValue, invalidKeyType := getMapValue(value, attr)
 			if !mapValue.IsValid() {
 				if invalidKeyType {
-					return ErrMapKeyNotString
+					return errMapKeyNotStringValue
 				}
-				return ErrNotFound
+				return errNotFoundValue
 			}
-			v = mapValue.Interface()
+			value = mapValue
 			continue
 
 		case reflect.Struct:
-			field, ok := vType.FieldByName(attr)
+			field, ok := value.Type().FieldByName(attr)
 			if !ok {
-				return ErrNotFound
+				return errNotFoundValue
 			}
 			if !field.IsExported() {
-				return ErrUnexported
+				return errUnexportedValue
 			}
 
-			v = value.FieldByName(attr).Interface()
+			value = value.FieldByName(attr)
 
 		case reflect.Slice, reflect.Array:
 			sliceIndex, err := strconv.Atoi(attr)
 			if err != nil {
-				return ErrInvalidIndex
+				return errInvalidIndexValue
 			}
 			if sliceIndex < 0 || sliceIndex >= value.Len() {
-				return ErrIndexOutOfRange
+				return errIndexOutOfRangeValue
 			}
 			field := value.Index(sliceIndex)
-			v = field.Interface()
+			value = field
 
 		default:
-			return ErrNotFound
+			return errNotFoundValue
 		}
 	}
 
-	return v
-}
-
-func GetMany(v interface{}, attributes []string) Fields {
-	m := make(Fields, len(attributes))
-
-	for _, attr := range attributes {
-		if _, ok := m[attr]; !ok {
-			m[attr] = Get(v, attr)
-		}
-	}
-
-	return m
+	return value
 }
