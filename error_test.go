@@ -41,3 +41,44 @@ func TestIsFieldError(t *testing.T) {
 		})
 	}
 }
+
+func TestFields_FirstError(t *testing.T) {
+	tests := []struct {
+		name string
+		f    godotted.Fields
+		want error
+	}{
+		{
+			name: "no errors",
+			f: map[string]interface{}{
+				"x": 1,
+				"y": 2,
+			},
+			want: nil,
+		},
+		{
+			name: "one field error",
+			f: map[string]interface{}{
+				"x":   1,
+				"y.5": godotted.ErrIndexOutOfRange,
+			},
+			want: godotted.ErrIndexOutOfRange,
+		},
+		{
+			name: "one non-field error",
+			f: map[string]interface{}{
+				"x": 1,
+				"y": fmt.Errorf("some error"),
+			},
+			want: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.f.FirstError()
+			if err != tt.want {
+				t.Errorf("FirstError() error = %v, want %v", err, tt.want)
+			}
+		})
+	}
+}

@@ -19,3 +19,13 @@ func IsFieldError(err interface{}) bool {
 	_, ok := err.(FieldError)
 	return ok
 }
+
+// FirstError returns the first FieldError found in this Fields map.
+func (f Fields) FirstError() error {
+	for _, v := range f {
+		if IsFieldError(v) {
+			return v.(FieldError)
+		}
+	}
+	return nil
+}
