@@ -6,19 +6,25 @@ import (
 	"strings"
 )
 
-type Error string
+type FieldError string
 
-func (e Error) Error() string {
+func (e FieldError) Error() string {
 	return string(e)
 }
 
 const (
-	ErrNotFound        Error = "field not found"
-	ErrInvalidIndex    Error = "invalid index"
-	ErrIndexOutOfRange Error = "index out of range"
-	ErrMapKeyNotString Error = "map key is not of string type"
-	ErrUnexported      Error = "field is unexported"
+	ErrNotFound        FieldError = "field not found"
+	ErrInvalidIndex    FieldError = "invalid index"
+	ErrIndexOutOfRange FieldError = "index out of range"
+	ErrMapKeyNotString FieldError = "map key is not of string type"
+	ErrUnexported      FieldError = "field is unexported"
 )
+
+// IsFieldError returns true when the given error is a FieldError.
+func IsFieldError(err interface{}) bool {
+	_, ok := err.(FieldError)
+	return ok
+}
 
 func GetAttribute(v interface{}, attribute string) interface{} {
 	return getAttribute(v, strings.Split(attribute, "."))
