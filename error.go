@@ -20,6 +20,11 @@ func IsFieldError(err interface{}) bool {
 	return ok
 }
 
+// HasErrors returns true if this Fields map has any FieldError.
+func (f Fields) HasErrors() bool {
+	return f.FirstError() != nil
+}
+
 // FirstError returns the first FieldError found in this Fields map.
 func (f Fields) FirstError() error {
 	for _, v := range f {
