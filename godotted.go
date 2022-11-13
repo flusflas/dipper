@@ -25,11 +25,7 @@ func GetAttributes(v interface{}, attributes []string) Fields {
 }
 
 func getAttribute(v interface{}, attribute []string) interface{} {
-	for i, attr := range attribute {
-		if i == len(attribute) {
-			return v
-		}
-
+	for _, attr := range attribute {
 		value := reflect.ValueOf(v)
 		vType := reflect.TypeOf(v)
 
