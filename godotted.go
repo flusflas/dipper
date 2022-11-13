@@ -8,24 +8,10 @@ import (
 
 type Fields map[string]interface{}
 
-func GetAttribute(v interface{}, attribute string) interface{} {
-	return getAttribute(v, strings.Split(attribute, "."))
-}
-
-func GetAttributes(v interface{}, attributes []string) Fields {
-	m := make(Fields, len(attributes))
+func Get(v interface{}, attribute string) interface{} {
+	attributes := strings.Split(attribute, ".")
 
 	for _, attr := range attributes {
-		if _, ok := m[attr]; !ok {
-			m[attr] = getAttribute(v, strings.Split(attr, "."))
-		}
-	}
-
-	return m
-}
-
-func getAttribute(v interface{}, attribute []string) interface{} {
-	for _, attr := range attribute {
 		value := reflect.ValueOf(v)
 		vType := reflect.TypeOf(v)
 
@@ -83,4 +69,16 @@ func getAttribute(v interface{}, attribute []string) interface{} {
 	}
 
 	return v
+}
+
+func GetMany(v interface{}, attributes []string) Fields {
+	m := make(Fields, len(attributes))
+
+	for _, attr := range attributes {
+		if _, ok := m[attr]; !ok {
+			m[attr] = Get(v, attr)
+		}
+	}
+
+	return m
 }

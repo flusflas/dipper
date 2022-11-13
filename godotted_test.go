@@ -30,7 +30,7 @@ func mustParseDate(date string) time.Time {
 	return t
 }
 
-func TestGetAttribute(t *testing.T) {
+func TestGet(t *testing.T) {
 
 	testStruct := &Book{
 		Title: "El nombre de la rosa",
@@ -167,15 +167,15 @@ func TestGetAttribute(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := godotted.GetAttribute(tt.args.v, tt.args.attribute)
+			got := godotted.Get(tt.args.v, tt.args.attribute)
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetAttributes() = %v, want %v", got, tt.want)
+				t.Errorf("GetMany() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestGetAttributes(t *testing.T) {
+func TestGetMany(t *testing.T) {
 	type args struct {
 		v          interface{}
 		attributes []string
@@ -362,9 +362,9 @@ func TestGetAttributes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := godotted.GetAttributes(tt.args.v, tt.args.attributes)
+			got := godotted.GetMany(tt.args.v, tt.args.attributes)
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetAttributes() = %v, want %v", got, tt.want)
+				t.Errorf("GetMany() = %v, want %v", got, tt.want)
 			}
 		})
 	}
