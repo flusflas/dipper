@@ -6,6 +6,32 @@ import (
 	"testing"
 )
 
+func TestFieldError_Error(t *testing.T) {
+	tests := []struct {
+		name string
+		e    godotted.FieldError
+		want string
+	}{
+		{
+			name: "not found",
+			e:    godotted.ErrNotFound,
+			want: "field not found",
+		},
+		{
+			name: "unexported",
+			e:    godotted.ErrUnexported,
+			want: "field is unexported",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.e.Error(); got != tt.want {
+				t.Errorf("Error() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestIsFieldError(t *testing.T) {
 	tests := []struct {
 		name string
