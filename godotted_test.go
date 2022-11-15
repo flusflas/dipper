@@ -22,6 +22,7 @@ type Book struct {
 	Author Author
 	Genres []string
 	Extra  map[interface{}]interface{}
+	Any    interface{}
 	Publication
 }
 
@@ -113,7 +114,7 @@ func TestGet(t *testing.T) {
 			want: godotted.ErrMapKeyNotString,
 		},
 		{
-			name: "slice",
+			name: "slice in struct",
 			args: args{
 				v:         testStruct,
 				attribute: "Genres.1",
@@ -121,7 +122,7 @@ func TestGet(t *testing.T) {
 			want: "Crime",
 		},
 		{
-			name: "slice root",
+			name: "slice",
 			args: args{
 				v: []interface{}{
 					123,
@@ -393,7 +394,7 @@ func TestSet(t *testing.T) {
 		want interface{}
 	}{
 		{
-			name: "change int value in struct",
+			name: "update int value in struct",
 			args: args{
 				attribute: "Year",
 				v: &Book{
@@ -405,7 +406,7 @@ func TestSet(t *testing.T) {
 			want: nil,
 		},
 		{
-			name: "change map value",
+			name: "update map value",
 			args: args{
 				attribute: "1",
 				v: map[string]interface{}{
@@ -414,6 +415,36 @@ func TestSet(t *testing.T) {
 				newValue: Book{
 					Title: "El nombre de la rosa",
 				},
+			},
+			want: nil,
+		},
+
+		{
+			name: "update interface value",
+			args: args{
+				attribute: "Any",
+				v: &Book{
+					Any: "some value",
+				},
+				newValue: "different value",
+			},
+			want: nil,
+		},
+		{
+			name: "update slice element",
+			args: args{
+				attribute: "1",
+				v:         []interface{}{"1", 2, 3.0},
+				newValue:  2 + 0i,
+			},
+			want: nil,
+		},
+		{
+			name: "update addressable array element",
+			args: args{
+				attribute: "1",
+				v:         &[3]interface{}{"1", 2, 3.0},
+				newValue:  2 + 0i,
 			},
 			want: nil,
 		},
@@ -453,14 +484,23 @@ func TestSet(t *testing.T) {
 		{
 			name: "unaddressable int value",
 			args: args{
-				attribute: "Year",
+				attribute: "",
 				v:         1979,
 				newValue:  1980,
 			},
 			want: godotted.ErrUnaddressable,
 		},
 		{
-			name: "change struct in map with wrong type",
+			name: "unaddressable array",
+			args: args{
+				attribute: "1",
+				v:         [3]interface{}{"1", 2, 3.0},
+				newValue:  2 + 0i,
+			},
+			want: godotted.ErrUnaddressable,
+		},
+		{
+			name: "update struct in map with wrong type",
 			args: args{
 				attribute: "1",
 				v: map[string]string{

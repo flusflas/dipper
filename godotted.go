@@ -98,16 +98,8 @@ func Set(v interface{}, attribute string, newValue interface{}) error {
 
 	value := reflect.ValueOf(v)
 
-	if value.Kind() == reflect.Map {
-		value = reflect.ValueOf(&v)
-	}
-
 	if value.Kind() == reflect.Pointer {
 		value = value.Elem()
-	}
-
-	if !value.CanAddr() {
-		return ErrUnaddressable
 	}
 
 	attributes := strings.Split(attribute, ".")
@@ -128,7 +120,10 @@ func Set(v interface{}, attribute string, newValue interface{}) error {
 		}
 		value.SetMapIndex(reflect.ValueOf(attributes[len(attributes)-1]), val)
 	} else {
-		if value.Type() != val.Type() {
+		if !value.CanAddr() {
+			return ErrUnaddressable
+		}
+		if value.Kind() != reflect.Interface && value.Type() != val.Type() {
 			return ErrTypesDoNotMatch
 		}
 		value.Set(val)
