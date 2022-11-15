@@ -25,6 +25,8 @@ type Book struct {
 	Publication
 }
 
+func intPtr(v int) *int { return &v }
+
 func mustParseDate(date string) time.Time {
 	t, _ := time.Parse("2006-01-02", date)
 	return t
@@ -59,6 +61,14 @@ func TestGet(t *testing.T) {
 		args args
 		want interface{}
 	}{
+		{
+			name: "empty attribute",
+			args: args{
+				v:         testStruct,
+				attribute: "",
+			},
+			want: testStruct,
+		},
 		{
 			name: "struct",
 			args: args{
@@ -169,7 +179,7 @@ func TestGet(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := godotted.Get(tt.args.v, tt.args.attribute)
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetMany() = %v, want %v", got, tt.want)
+				t.Errorf("Get() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -368,4 +378,128 @@ func TestGetMany(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSet(t *testing.T) {
+
+	type args struct {
+		v         interface{}
+		attribute string
+		newValue  interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+		want interface{}
+	}{
+		{
+			name: "change int value in struct",
+			args: args{
+				attribute: "Year",
+				v: &Book{
+					Title: "El nombre de la rosa",
+					Year:  1979,
+				},
+				newValue: 1980,
+			},
+			want: nil,
+		},
+		{
+			name: "change map value",
+			args: args{
+				attribute: "1",
+				v: map[string]interface{}{
+					"1": "Rendezvous with Rama",
+				},
+				newValue: Book{
+					Title: "El nombre de la rosa",
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "addressable int value",
+			args: args{
+				attribute: "",
+				v:         intPtr(1979),
+				newValue:  intPtr(1980),
+			},
+			want: nil,
+		},
+		{
+			name: "field not match",
+			args: args{
+				attribute: "Name",
+				v: &Book{
+					Title: "El nombre de la rosa",
+					Year:  1979,
+				},
+				newValue: 1980,
+			},
+			want: godotted.ErrNotFound,
+		},
+		{
+			name: "unaddressable struct value",
+			args: args{
+				attribute: "Year",
+				v: Book{
+					Title: "El nombre de la rosa",
+					Year:  1979,
+				},
+				newValue: 1980,
+			},
+			want: godotted.ErrUnaddressable,
+		},
+		{
+			name: "unaddressable int value",
+			args: args{
+				attribute: "Year",
+				v:         1979,
+				newValue:  1980,
+			},
+			want: godotted.ErrUnaddressable,
+		},
+		{
+			name: "change struct in map with wrong type",
+			args: args{
+				attribute: "1",
+				v: map[string]string{
+					"1": "Rendezvous with Rama",
+				},
+				newValue: 123,
+			},
+			want: godotted.ErrTypesDoNotMatch,
+		},
+		{
+			name: "types do not match",
+			args: args{
+				attribute: "Year",
+				v: &Book{
+					Title: "El nombre de la rosa",
+					Year:  1979,
+				},
+				newValue: "1980",
+			},
+			want: godotted.ErrTypesDoNotMatch,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := godotted.Set(tt.args.v, tt.args.attribute, tt.args.newValue)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Set() = %v, want %v", got, tt.want)
+			}
+			if tt.want == nil {
+				newValue := godotted.Get(tt.args.v, tt.args.attribute)
+				if !reflect.DeepEqual(newValue, tt.args.newValue) {
+					t.Errorf("Set() => Value did not change to %v", tt.args.newValue)
+				}
+			}
+		})
+	}
+}
+
+func set(v interface{}, _ string, newValue interface{}) error {
+	v.(map[string]interface{})["1"] = newValue
+	return nil
 }

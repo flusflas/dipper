@@ -9,7 +9,11 @@ import (
 type Fields map[string]interface{}
 
 func Get(v interface{}, attribute string) interface{} {
-	return getReflectValue(v, strings.Split(attribute, ".")).Interface()
+	value, err := getReflectValue(reflect.ValueOf(v), strings.Split(attribute, "."), false)
+	if err != nil {
+		return err
+	}
+	return value.Interface()
 }
 
 func GetMany(v interface{}, attributes []string) Fields {
@@ -24,17 +28,22 @@ func GetMany(v interface{}, attributes []string) Fields {
 	return m
 }
 
-func getReflectValue(v interface{}, attributes []string) reflect.Value {
-	value := reflect.ValueOf(v)
+func getReflectValue(value reflect.Value, attributes []string, toSet bool) (reflect.Value, error) {
+	if len(attributes) == 1 && attributes[0] == "" {
+		return value, nil
+	}
 
-	for _, attr := range attributes {
-
+	for i, attr := range attributes {
 		if value.Kind() == reflect.Pointer || value.Kind() == reflect.Interface {
 			value = value.Elem()
 		}
 
 		switch value.Kind() {
 		case reflect.Map:
+			if toSet && i == len(attributes)-1 {
+				break
+			}
+
 			getMapValue := func(v reflect.Value, key string) (mapValue reflect.Value, invalidKeyValue bool) {
 				defer func() {
 					if e := recover(); e != nil {
@@ -47,9 +56,9 @@ func getReflectValue(v interface{}, attributes []string) reflect.Value {
 			mapValue, invalidKeyType := getMapValue(value, attr)
 			if !mapValue.IsValid() {
 				if invalidKeyType {
-					return errMapKeyNotStringValue
+					return value, ErrMapKeyNotString
 				}
-				return errNotFoundValue
+				return value, ErrNotFound
 			}
 			value = mapValue
 			continue
@@ -57,10 +66,10 @@ func getReflectValue(v interface{}, attributes []string) reflect.Value {
 		case reflect.Struct:
 			field, ok := value.Type().FieldByName(attr)
 			if !ok {
-				return errNotFoundValue
+				return value, ErrNotFound
 			}
 			if !field.IsExported() {
-				return errUnexportedValue
+				return value, ErrUnexported
 			}
 
 			value = value.FieldByName(attr)
@@ -68,18 +77,61 @@ func getReflectValue(v interface{}, attributes []string) reflect.Value {
 		case reflect.Slice, reflect.Array:
 			sliceIndex, err := strconv.Atoi(attr)
 			if err != nil {
-				return errInvalidIndexValue
+				return value, ErrInvalidIndex
 			}
 			if sliceIndex < 0 || sliceIndex >= value.Len() {
-				return errIndexOutOfRangeValue
+				return value, ErrIndexOutOfRange
 			}
 			field := value.Index(sliceIndex)
 			value = field
 
 		default:
-			return errNotFoundValue
+			return value, ErrNotFound
 		}
 	}
 
-	return value
+	return value, nil
+}
+
+func Set(v interface{}, attribute string, newValue interface{}) error {
+	var err error
+
+	value := reflect.ValueOf(v)
+
+	if value.Kind() == reflect.Map {
+		value = reflect.ValueOf(&v)
+	}
+
+	if value.Kind() == reflect.Pointer {
+		value = value.Elem()
+	}
+
+	if !value.CanAddr() {
+		return ErrUnaddressable
+	}
+
+	attributes := strings.Split(attribute, ".")
+	value, err = getReflectValue(value, attributes, true)
+	if err != nil {
+		return err
+	}
+
+	val := reflect.ValueOf(newValue)
+	if val.Kind() == reflect.Pointer {
+		val = val.Elem()
+	}
+
+	if value.Kind() == reflect.Map {
+		mapValueType := value.Type().Elem()
+		if mapValueType.Kind() != reflect.Interface && mapValueType != val.Type() {
+			return ErrTypesDoNotMatch
+		}
+		value.SetMapIndex(reflect.ValueOf(attributes[len(attributes)-1]), val)
+	} else {
+		if value.Type() != val.Type() {
+			return ErrTypesDoNotMatch
+		}
+		value.Set(val)
+	}
+	return nil
 }
