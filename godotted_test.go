@@ -390,10 +390,15 @@ func TestSet(t *testing.T) {
 		attribute string
 		newValue  interface{}
 	}
+	type want struct {
+		result   interface{}
+		deleted  bool
+		newValue interface{}
+	}
 	tests := []struct {
 		name string
 		args args
-		want interface{}
+		want want
 	}{
 		{
 			name: "update int value in struct",
@@ -405,7 +410,10 @@ func TestSet(t *testing.T) {
 				},
 				newValue: 1980,
 			},
-			want: nil,
+			want: want{
+				result:   nil,
+				newValue: 1980,
+			},
 		},
 		{
 			name: "update map value",
@@ -418,7 +426,12 @@ func TestSet(t *testing.T) {
 					Title: "El nombre de la rosa",
 				},
 			},
-			want: nil,
+			want: want{
+				result: nil,
+				newValue: Book{
+					Title: "El nombre de la rosa",
+				},
+			},
 		},
 		{
 			name: "update nested map value",
@@ -433,7 +446,12 @@ func TestSet(t *testing.T) {
 					Title: "El nombre de la rosa",
 				},
 			},
-			want: nil,
+			want: want{
+				result: nil,
+				newValue: Book{
+					Title: "El nombre de la rosa",
+				},
+			},
 		},
 		{
 			name: "update interface value",
@@ -444,7 +462,10 @@ func TestSet(t *testing.T) {
 				},
 				newValue: "different value",
 			},
-			want: nil,
+			want: want{
+				result:   nil,
+				newValue: "different value",
+			},
 		},
 		{
 			name: "update slice element",
@@ -453,7 +474,10 @@ func TestSet(t *testing.T) {
 				v:         []interface{}{"1", 2, 3.0},
 				newValue:  2 + 0i,
 			},
-			want: nil,
+			want: want{
+				result:   nil,
+				newValue: 2 + 0i,
+			},
 		},
 		{
 			name: "update addressable array element",
@@ -462,7 +486,10 @@ func TestSet(t *testing.T) {
 				v:         &[3]interface{}{"1", 2, 3.0},
 				newValue:  2 + 0i,
 			},
-			want: nil,
+			want: want{
+				result:   nil,
+				newValue: 2 + 0i,
+			},
 		},
 		{
 			name: "addressable int value",
@@ -471,7 +498,63 @@ func TestSet(t *testing.T) {
 				v:         intPtr(1979),
 				newValue:  intPtr(1980),
 			},
-			want: nil,
+			want: want{
+				result:   nil,
+				newValue: intPtr(1980),
+			},
+		},
+		{
+			name: "delete map key",
+			args: args{
+				attribute: "foo",
+				v: map[string]int{
+					"foo": 123,
+				},
+				newValue: godotted.Delete,
+			},
+			want: want{
+				result:   nil,
+				deleted:  true,
+				newValue: godotted.Delete,
+			},
+		},
+		{
+			name: "delete slice element",
+			args: args{
+				attribute: "1",
+				v:         []int{1, 2, 3},
+				newValue:  godotted.Delete,
+			},
+			want: want{
+				result:   nil,
+				newValue: 0,
+			},
+		},
+		{
+			name: "set zero value to []interface",
+			args: args{
+				attribute: "3",
+				v:         []interface{}{"1", 2, 3.0, 4 + 0i},
+				newValue:  godotted.Zero,
+			},
+			want: want{
+				result:   nil,
+				newValue: nil,
+			},
+		},
+		{
+			name: "set zero value to string in struct",
+			args: args{
+				attribute: "Title",
+				v: &Book{
+					Title: "El nombre de la rosa",
+				},
+				newValue: godotted.Zero,
+			},
+			want: want{
+				result:   nil,
+				newValue: "",
+			},
 		},
 		{
 			name: "field not match",
@@ -483,7 +566,10 @@ func TestSet(t *testing.T) {
 				},
 				newValue: 1980,
 			},
-			want: godotted.ErrNotFound,
+			want: want{
+				result:   godotted.ErrNotFound,
+				newValue: 1980,
+			},
 		},
 		{
 			name: "unaddressable struct value",
@@ -495,7 +581,10 @@ func TestSet(t *testing.T) {
 				},
 				newValue: 1980,
 			},
-			want: godotted.ErrUnaddressable,
+			want: want{
+				result:   godotted.ErrUnaddressable,
+				newValue: 1980,
+			},
 		},
 		{
 			name: "unaddressable int value",
@@ -504,7 +593,10 @@ func TestSet(t *testing.T) {
 				v:         1979,
 				newValue:  1980,
 			},
-			want: godotted.ErrUnaddressable,
+			want: want{
+				result:   godotted.ErrUnaddressable,
+				newValue: 1980,
+			},
 		},
 		{
 			name: "unaddressable array",
@@ -513,7 +605,10 @@ func TestSet(t *testing.T) {
 				v:         [3]interface{}{"1", 2, 3.0},
 				newValue:  2 + 0i,
 			},
-			want: godotted.ErrUnaddressable,
+			want: want{
+				result:   godotted.ErrUnaddressable,
+				newValue: 2 + 0i,
+			},
 		},
 		{
 			name: "update struct in map with wrong type",
@@ -524,7 +619,10 @@ func TestSet(t *testing.T) {
 				},
 				newValue: 123,
 			},
-			want: godotted.ErrTypesDoNotMatch,
+			want: want{
+				result:   godotted.ErrTypesDoNotMatch,
+				newValue: 123,
+			},
 		},
 		{
 			name: "types do not match",
@@ -536,19 +634,26 @@ func TestSet(t *testing.T) {
 				},
 				newValue: "1980",
 			},
-			want: godotted.ErrTypesDoNotMatch,
+			want: want{
+				result:   godotted.ErrTypesDoNotMatch,
+				newValue: "1980",
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := godotted.Set(tt.args.v, tt.args.attribute, tt.args.newValue)
-			if !reflect.DeepEqual(got, tt.want) {
+			if !reflect.DeepEqual(got, tt.want.result) {
 				t.Errorf("Set() = %v, want %v", got, tt.want)
 			}
-			if tt.want == nil {
+			if tt.want.result == nil {
 				newValue := godotted.Get(tt.args.v, tt.args.attribute)
-				if !reflect.DeepEqual(newValue, tt.args.newValue) {
-					t.Errorf("Set() => Value did not change to %v", tt.args.newValue)
+				if tt.want.deleted && newValue != godotted.ErrNotFound {
+					t.Errorf("Set() => Map value was not deleted")
+				}
+
+				if !tt.want.deleted && !reflect.DeepEqual(newValue, tt.want.newValue) {
+					t.Errorf("Set() => Value did not change to %v", tt.want.newValue)
 				}
 			}
 		})

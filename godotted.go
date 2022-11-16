@@ -7,6 +7,17 @@ import (
 	"strings"
 )
 
+type setOption int
+
+const (
+	// Zero is used as the new value in Set() to set the attribute to its zero
+	// value (e.g. "" for string, nil for interface{}, etc.).
+	Zero setOption = 0
+	// Delete is used as the new value in Set() to delete a map key. If the
+	// field is not a map value, the value will be zeroed (see Zero).
+	Delete setOption = 1
+)
+
 type Fields map[string]interface{}
 
 func Get(v interface{}, attribute string) interface{} {
@@ -117,23 +128,39 @@ func Set(v interface{}, attribute string, newValue interface{}) error {
 		return err
 	}
 
-	val := reflect.ValueOf(newValue)
-	if val.Kind() == reflect.Pointer {
-		val = val.Elem()
+	var optZero, optDelete bool
+
+	var val reflect.Value
+	switch newValue {
+	case Zero:
+		optZero = true
+	case Delete:
+		optDelete = true
+	default:
+		val = reflect.ValueOf(newValue)
+		if val.Kind() == reflect.Pointer {
+			val = val.Elem()
+		}
 	}
 
 	if value.Kind() == reflect.Map {
-		mapValueType := value.Type().Elem()
-		if mapValueType.Kind() != reflect.Interface && mapValueType != val.Type() {
-			return ErrTypesDoNotMatch
+		if !optZero && !optDelete {
+			mapValueType := value.Type().Elem()
+			if mapValueType.Kind() != reflect.Interface && mapValueType != val.Type() {
+				return ErrTypesDoNotMatch
+			}
 		}
 		value.SetMapIndex(reflect.ValueOf(lastStringPart(attribute)), val)
 	} else {
-		if !value.CanAddr() {
-			return ErrUnaddressable
-		}
-		if value.Kind() != reflect.Interface && value.Type() != val.Type() {
-			return ErrTypesDoNotMatch
+		if !optZero && !optDelete {
+			if !value.CanAddr() {
+				return ErrUnaddressable
+			}
+			if value.Kind() != reflect.Interface && value.Type() != val.Type() {
+				return ErrTypesDoNotMatch
+			}
+		} else {
+			val = reflect.Zero(value.Type())
 		}
 		value.Set(val)
 	}
