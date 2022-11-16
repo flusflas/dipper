@@ -1,6 +1,8 @@
 package godotted_test
 
 import (
+	"encoding/json"
+	"fmt"
 	"godotted"
 	"reflect"
 	"testing"
@@ -553,7 +555,110 @@ func TestSet(t *testing.T) {
 	}
 }
 
-func set(v interface{}, _ string, newValue interface{}) error {
-	v.(map[string]interface{})["1"] = newValue
-	return nil
+func ExampleGet() {
+	persons := []struct {
+		Name  string
+		Age   int
+		About map[string]interface{}
+	}{
+		{
+			Name: "Leela",
+			Age:  25,
+			About: map[string]interface{}{
+				"spaceship pilot":  "Also can drive cars",
+				"depth_perception": false,
+			},
+		},
+		{
+			Name: "Fry",
+			Age:  1025,
+			About: map[string]interface{}{
+				"delivery":    "3/10",
+				"game_player": 8,
+				"powers":      []string{"Psychic immunity", "Caffeine"},
+			},
+		},
+	}
+
+	fmt.Println(godotted.Get(persons, "0.Name"))
+	fmt.Println(godotted.Get(persons, "0.About.spaceship pilot"))
+	fmt.Println(godotted.Get(persons, "1.Age"))
+	fmt.Println(godotted.Get(persons, "1.About.powers.0"))
+	fmt.Println(godotted.Get(persons, "1.Height"))
+	fmt.Println(godotted.Get(persons, "2"))
+
+	// Output:
+	// Leela
+	// Also can drive cars
+	// 1025
+	// Psychic immunity
+	// field not found
+	// index out of range
+}
+
+func ExampleGetMany() {
+	persons := []struct {
+		Name  string
+		Age   int
+		About map[string]interface{}
+	}{
+		{
+			Name: "Leela",
+			Age:  25,
+			About: map[string]interface{}{
+				"spaceship pilot":  "Also can drive cars",
+				"depth_perception": false,
+			},
+		},
+		{
+			Name: "Fry",
+			Age:  1025,
+			About: map[string]interface{}{
+				"delivery":    "3/10",
+				"game_player": 8,
+				"powers":      []string{"Psychic immunity", "Caffeine"},
+			},
+		},
+	}
+
+	fields := godotted.GetMany(persons, []string{
+		"0.Name",
+		"1.About.powers.0",
+		"1.Height",
+	})
+
+	b, _ := json.MarshalIndent(fields, "", "  ")
+	fmt.Println(string(b))
+
+	// Output:
+	// {
+	//   "0.Name": "Leela",
+	//   "1.About.powers.0": "Psychic immunity",
+	//   "1.Height": "field not found"
+	// }
+}
+
+func ExampleSet() {
+	person := struct {
+		Name  string
+		Age   int
+		About map[string]interface{}
+	}{
+		Name:  "Leela",
+		Age:   25,
+		About: map[string]interface{}{},
+	}
+
+	fmt.Println(godotted.Set(&person, "Name", "Amy"))
+	fmt.Println(godotted.Set(&person, "Age", 21))
+	fmt.Println(godotted.Set(&person, "About.rich", true))
+	fmt.Println(godotted.Set(person, "", true))
+	fmt.Println(person)
+
+	// Output:
+	// <nil>
+	// <nil>
+	// <nil>
+	// field is unaddressable
+	// {Amy 21 map[rich:true]}
 }
