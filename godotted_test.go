@@ -418,7 +418,21 @@ func TestSet(t *testing.T) {
 			},
 			want: nil,
 		},
-
+		{
+			name: "update nested map value",
+			args: args{
+				attribute: "Extra.1",
+				v: &Book{
+					Extra: map[interface{}]interface{}{
+						"1": "Rendezvous with Rama",
+					},
+				},
+				newValue: Book{
+					Title: "El nombre de la rosa",
+				},
+			},
+			want: nil,
+		},
 		{
 			name: "update interface value",
 			args: args{

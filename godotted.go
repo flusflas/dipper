@@ -1,6 +1,7 @@
 package godotted
 
 import (
+	"godotted/splitter"
 	"reflect"
 	"strconv"
 	"strings"
@@ -9,7 +10,7 @@ import (
 type Fields map[string]interface{}
 
 func Get(v interface{}, attribute string) interface{} {
-	value, err := getReflectValue(reflect.ValueOf(v), strings.Split(attribute, "."), false)
+	value, err := getReflectValue(reflect.ValueOf(v), attribute, false)
 	if err != nil {
 		return err
 	}
@@ -28,19 +29,29 @@ func GetMany(v interface{}, attributes []string) Fields {
 	return m
 }
 
-func getReflectValue(value reflect.Value, attributes []string, toSet bool) (reflect.Value, error) {
-	if len(attributes) == 1 && attributes[0] == "" {
+func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect.Value, error) {
+	if attribute == "" {
 		return value, nil
 	}
 
-	for i, attr := range attributes {
+	var i, maxSetDepth int
+	var attr string
+	if toSet {
+		maxSetDepth = strings.Count(attribute, ".")
+	}
+
+	split := splitter.NewSplitter(attribute, ".")
+	for split.HasMore() {
+		attr, i = split.Next()
+
 		if value.Kind() == reflect.Pointer || value.Kind() == reflect.Interface {
 			value = value.Elem()
 		}
 
 		switch value.Kind() {
 		case reflect.Map:
-			if toSet && i == len(attributes)-1 {
+			// If a map key has to be set, skip the last attribute and return the map
+			if toSet && i == maxSetDepth {
 				break
 			}
 
@@ -61,7 +72,6 @@ func getReflectValue(value reflect.Value, attributes []string, toSet bool) (refl
 				return value, ErrNotFound
 			}
 			value = mapValue
-			continue
 
 		case reflect.Struct:
 			field, ok := value.Type().FieldByName(attr)
@@ -102,8 +112,7 @@ func Set(v interface{}, attribute string, newValue interface{}) error {
 		value = value.Elem()
 	}
 
-	attributes := strings.Split(attribute, ".")
-	value, err = getReflectValue(value, attributes, true)
+	value, err = getReflectValue(value, attribute, true)
 	if err != nil {
 		return err
 	}
@@ -118,7 +127,7 @@ func Set(v interface{}, attribute string, newValue interface{}) error {
 		if mapValueType.Kind() != reflect.Interface && mapValueType != val.Type() {
 			return ErrTypesDoNotMatch
 		}
-		value.SetMapIndex(reflect.ValueOf(attributes[len(attributes)-1]), val)
+		value.SetMapIndex(reflect.ValueOf(lastStringPart(attribute)), val)
 	} else {
 		if !value.CanAddr() {
 			return ErrUnaddressable
@@ -129,4 +138,12 @@ func Set(v interface{}, attribute string, newValue interface{}) error {
 		value.Set(val)
 	}
 	return nil
+}
+
+func lastStringPart(s string) string {
+	index := strings.LastIndexByte(s, '.')
+	if index == -1 {
+		return s
+	}
+	return s[index+1:]
 }
