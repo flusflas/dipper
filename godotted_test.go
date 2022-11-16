@@ -557,6 +557,29 @@ func TestSet(t *testing.T) {
 			},
 		},
 		{
+			name: "set key to nil map",
+			args: args{
+				attribute: "Extra.foo",
+				v:         &Book{Extra: nil},
+				newValue:  123,
+			},
+			want: want{
+				result:   nil,
+				newValue: 123,
+			},
+		},
+		{
+			name: "set key to nil slice",
+			args: args{
+				attribute: "Genres.0",
+				v:         &Book{Genres: nil},
+				newValue:  "Sci-Fi",
+			},
+			want: want{
+				result: godotted.ErrIndexOutOfRange,
+			},
+		},
+		{
 			name: "field not match",
 			args: args{
 				attribute: "Name",

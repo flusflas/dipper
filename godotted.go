@@ -150,7 +150,18 @@ func Set(v interface{}, attribute string, newValue interface{}) error {
 				return ErrTypesDoNotMatch
 			}
 		}
-		value.SetMapIndex(reflect.ValueOf(lastStringPart(attribute)), val)
+
+		key := lastStringPart(attribute)
+
+		// Initialize map if needed
+		if value.IsNil() {
+			keyType := value.Type().Key()
+			valueType := value.Type().Elem()
+			mapType := reflect.MapOf(keyType, valueType)
+			value.Set(reflect.MakeMapWithSize(mapType, 0))
+		}
+
+		value.SetMapIndex(reflect.ValueOf(key), val)
 	} else {
 		if !optZero && !optDelete {
 			if !value.CanAddr() {
