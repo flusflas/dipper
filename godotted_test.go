@@ -662,6 +662,19 @@ func TestSet(t *testing.T) {
 				newValue: "1980",
 			},
 		},
+		{
+			name: "update map value with invalid key type",
+			args: args{
+				attribute: "1",
+				v: map[int]interface{}{
+					1: "Rendezvous with Rama",
+				},
+				newValue: "El nombre de la rosa",
+			},
+			want: want{
+				result: godotted.ErrMapKeyNotString,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

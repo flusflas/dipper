@@ -61,15 +61,15 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect
 
 		switch value.Kind() {
 		case reflect.Map:
-			// If a map key has to be set, skip the last attribute and return the map
-			if toSet && i == maxSetDepth {
-				break
-			}
-
 			// Check that the map accept string keys
 			keyKind := value.Type().Key().Kind()
 			if keyKind != reflect.String && keyKind != reflect.Interface {
 				return value, ErrMapKeyNotString
+			}
+
+			// If a map key has to be set, skip the last attribute and return the map
+			if toSet && i == maxSetDepth {
+				break
 			}
 
 			value = value.MapIndex(reflect.ValueOf(attr))
