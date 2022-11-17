@@ -1,7 +1,6 @@
 package godotted
 
 import (
-	"godotted/splitter"
 	"reflect"
 	"strconv"
 	"strings"
@@ -51,9 +50,9 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect
 		maxSetDepth = strings.Count(attribute, ".")
 	}
 
-	split := splitter.NewSplitter(attribute, ".")
-	for split.HasMore() {
-		attr, i = split.Next()
+	splitter := newAttributeSplitter(attribute, ".")
+	for splitter.HasMore() {
+		attr, i = splitter.Next()
 
 		if value.Kind() == reflect.Pointer || value.Kind() == reflect.Interface {
 			value = value.Elem()

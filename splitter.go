@@ -1,23 +1,23 @@
-package splitter
+package godotted
 
 import "strings"
 
-type Splitter struct {
+type attributeSplitter struct {
 	sep     string
 	index   int
 	remain  string
 	hasMore bool
 }
 
-func NewSplitter(s, sep string) *Splitter {
-	return &Splitter{sep: sep, index: -1, remain: s, hasMore: true}
+func newAttributeSplitter(s, sep string) *attributeSplitter {
+	return &attributeSplitter{sep: sep, index: -1, remain: s, hasMore: true}
 }
 
-func (s *Splitter) HasMore() bool {
+func (s *attributeSplitter) HasMore() bool {
 	return s.hasMore
 }
 
-func (s *Splitter) Next() (string, int) {
+func (s *attributeSplitter) Next() (string, int) {
 	var remain string
 	if !s.hasMore {
 		return "", -1

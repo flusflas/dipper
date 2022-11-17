@@ -1,12 +1,11 @@
-package splitter_test
+package godotted
 
 import (
-	"godotted/splitter"
 	"reflect"
 	"testing"
 )
 
-func TestSplitter(t *testing.T) {
+func TestAttributeSplitter(t *testing.T) {
 	type args struct {
 		s   string
 		sep string
@@ -34,7 +33,7 @@ func TestSplitter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			split := splitter.NewSplitter(tt.args.s, tt.args.sep)
+			split := newAttributeSplitter(tt.args.s, tt.args.sep)
 
 			expectedIndex := 0
 			var results []string
@@ -52,7 +51,7 @@ func TestSplitter(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(results, tt.want) {
-				t.Errorf("NewSplitter() = %v, want %v", results, tt.want)
+				t.Errorf("newAttributeSplitter() = %v, want %v", results, tt.want)
 			}
 		})
 	}
