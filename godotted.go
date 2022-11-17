@@ -123,23 +123,23 @@ func Set(v interface{}, attribute string, newValue interface{}) error {
 
 	var optZero, optDelete bool
 
-	var val reflect.Value
+	var setValue reflect.Value
 	switch newValue {
 	case Zero:
 		optZero = true
 	case Delete:
 		optDelete = true
 	default:
-		val = reflect.ValueOf(newValue)
-		if val.Kind() == reflect.Pointer {
-			val = val.Elem()
+		setValue = reflect.ValueOf(newValue)
+		if setValue.Kind() == reflect.Pointer {
+			setValue = setValue.Elem()
 		}
 	}
 
 	if value.Kind() == reflect.Map {
 		if !optZero && !optDelete {
 			mapValueType := value.Type().Elem()
-			if mapValueType.Kind() != reflect.Interface && mapValueType != val.Type() {
+			if mapValueType.Kind() != reflect.Interface && mapValueType != setValue.Type() {
 				return ErrTypesDoNotMatch
 			}
 		}
@@ -154,19 +154,19 @@ func Set(v interface{}, attribute string, newValue interface{}) error {
 			value.Set(reflect.MakeMapWithSize(mapType, 0))
 		}
 
-		value.SetMapIndex(reflect.ValueOf(key), val)
+		value.SetMapIndex(reflect.ValueOf(key), setValue)
 	} else {
 		if !optZero && !optDelete {
 			if !value.CanAddr() {
 				return ErrUnaddressable
 			}
-			if value.Kind() != reflect.Interface && value.Type() != val.Type() {
+			if value.Kind() != reflect.Interface && value.Type() != setValue.Type() {
 				return ErrTypesDoNotMatch
 			}
 		} else {
-			val = reflect.Zero(value.Type())
+			setValue = reflect.Zero(value.Type())
 		}
-		value.Set(val)
+		value.Set(setValue)
 	}
 	return nil
 }
