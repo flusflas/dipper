@@ -17,9 +17,17 @@ const (
 )
 
 // IsFieldError returns true when the given value is a FieldError.
-func IsFieldError(err interface{}) bool {
-	_, ok := err.(FieldError)
+func IsFieldError(v interface{}) bool {
+	_, ok := v.(FieldError)
 	return ok
+}
+
+// Error casts the given value to FieldError if possible, otherwise returns nil.
+func Error(v interface{}) error {
+	if err, ok := v.(FieldError); ok {
+		return err
+	}
+	return nil
 }
 
 // HasErrors returns true if this Fields map has any FieldError.

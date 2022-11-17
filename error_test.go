@@ -68,6 +68,42 @@ func TestIsFieldError(t *testing.T) {
 	}
 }
 
+func TestError(t *testing.T) {
+	tests := []struct {
+		name string
+		arg  interface{}
+		want error
+	}{
+		{
+			name: "nil interface",
+			arg:  nil,
+			want: nil,
+		},
+		{
+			name: "no error value",
+			arg:  123,
+			want: nil,
+		},
+		{
+			name: "non-field error",
+			arg:  fmt.Errorf("some error"),
+			want: nil,
+		},
+		{
+			name: "field error",
+			arg:  godotted.ErrNotFound,
+			want: godotted.ErrNotFound,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := godotted.Error(tt.arg); got != tt.want {
+				t.Errorf("IsFieldError() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestFields_HasErrors(t *testing.T) {
 	tests := []struct {
 		name string
