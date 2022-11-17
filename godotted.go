@@ -66,23 +66,16 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect
 				break
 			}
 
-			getMapValue := func(v reflect.Value, key string) (mapValue reflect.Value, invalidKeyValue bool) {
-				defer func() {
-					if e := recover(); e != nil {
-						invalidKeyValue = true
-					}
-				}()
-				return v.MapIndex(reflect.ValueOf(attr)), false
+			// Check that the map accept string keys
+			keyKind := value.Type().Key().Kind()
+			if keyKind != reflect.String && keyKind != reflect.Interface {
+				return value, ErrMapKeyNotString
 			}
 
-			mapValue, invalidKeyType := getMapValue(value, attr)
-			if !mapValue.IsValid() {
-				if invalidKeyType {
-					return value, ErrMapKeyNotString
-				}
+			value = value.MapIndex(reflect.ValueOf(attr))
+			if !value.IsValid() {
 				return value, ErrNotFound
 			}
-			value = mapValue
 
 		case reflect.Struct:
 			field, ok := value.Type().FieldByName(attr)
