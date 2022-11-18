@@ -19,20 +19,20 @@ const (
 
 type Fields map[string]interface{}
 
-func Get(v interface{}, attribute string) interface{} {
-	value, err := getReflectValue(reflect.ValueOf(v), attribute, false)
+func Get(obj interface{}, attribute string) interface{} {
+	value, err := getReflectValue(reflect.ValueOf(obj), attribute, false)
 	if err != nil {
 		return err
 	}
 	return value.Interface()
 }
 
-func GetMany(v interface{}, attributes []string) Fields {
+func GetMany(obj interface{}, attributes []string) Fields {
 	m := make(Fields, len(attributes))
 
 	for _, attr := range attributes {
 		if _, ok := m[attr]; !ok {
-			m[attr] = Get(v, attr)
+			m[attr] = Get(obj, attr)
 		}
 	}
 
@@ -45,14 +45,14 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect
 	}
 
 	var i, maxSetDepth int
-	var attr string
+	var fieldName string
 	if toSet {
 		maxSetDepth = strings.Count(attribute, ".")
 	}
 
 	splitter := newAttributeSplitter(attribute, ".")
 	for splitter.HasMore() {
-		attr, i = splitter.Next()
+		fieldName, i = splitter.Next()
 
 		if value.Kind() == reflect.Pointer || value.Kind() == reflect.Interface {
 			value = value.Elem()
@@ -71,13 +71,13 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect
 				break
 			}
 
-			value = value.MapIndex(reflect.ValueOf(attr))
+			value = value.MapIndex(reflect.ValueOf(fieldName))
 			if !value.IsValid() {
 				return value, ErrNotFound
 			}
 
 		case reflect.Struct:
-			field, ok := value.Type().FieldByName(attr)
+			field, ok := value.Type().FieldByName(fieldName)
 			if !ok {
 				return value, ErrNotFound
 			}
@@ -85,10 +85,10 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect
 				return value, ErrUnexported
 			}
 
-			value = value.FieldByName(attr)
+			value = value.FieldByName(fieldName)
 
 		case reflect.Slice, reflect.Array:
-			sliceIndex, err := strconv.Atoi(attr)
+			sliceIndex, err := strconv.Atoi(fieldName)
 			if err != nil {
 				return value, ErrInvalidIndex
 			}
@@ -106,10 +106,10 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect
 	return value, nil
 }
 
-func Set(v interface{}, attribute string, newValue interface{}) error {
+func Set(obj interface{}, attribute string, new interface{}) error {
 	var err error
 
-	value := reflect.ValueOf(v)
+	value := reflect.ValueOf(obj)
 
 	if value.Kind() == reflect.Pointer {
 		value = value.Elem()
@@ -122,23 +122,23 @@ func Set(v interface{}, attribute string, newValue interface{}) error {
 
 	var optZero, optDelete bool
 
-	var setValue reflect.Value
-	switch newValue {
+	var newValue reflect.Value
+	switch new {
 	case Zero:
 		optZero = true
 	case Delete:
 		optDelete = true
 	default:
-		setValue = reflect.ValueOf(newValue)
-		if setValue.Kind() == reflect.Pointer {
-			setValue = setValue.Elem()
+		newValue = reflect.ValueOf(new)
+		if newValue.Kind() == reflect.Pointer {
+			newValue = newValue.Elem()
 		}
 	}
 
 	if value.Kind() == reflect.Map {
 		if !optZero && !optDelete {
 			mapValueType := value.Type().Elem()
-			if mapValueType.Kind() != reflect.Interface && mapValueType != setValue.Type() {
+			if mapValueType.Kind() != reflect.Interface && mapValueType != newValue.Type() {
 				return ErrTypesDoNotMatch
 			}
 		}
@@ -153,19 +153,19 @@ func Set(v interface{}, attribute string, newValue interface{}) error {
 			value.Set(reflect.MakeMapWithSize(mapType, 0))
 		}
 
-		value.SetMapIndex(reflect.ValueOf(key), setValue)
+		value.SetMapIndex(reflect.ValueOf(key), newValue)
 	} else {
 		if !optZero && !optDelete {
 			if !value.CanAddr() {
 				return ErrUnaddressable
 			}
-			if value.Kind() != reflect.Interface && value.Type() != setValue.Type() {
+			if value.Kind() != reflect.Interface && value.Type() != newValue.Type() {
 				return ErrTypesDoNotMatch
 			}
 		} else {
-			setValue = reflect.Zero(value.Type())
+			newValue = reflect.Zero(value.Type())
 		}
-		value.Set(setValue)
+		value.Set(newValue)
 	}
 	return nil
 }
