@@ -13,26 +13,26 @@ const (
 	// ErrNotFound is the error returned when an attribute is not found.
 	// Depending on the type of the accessed attribute, it can mean that the
 	// attribute does not exist as a struct field or as a map key.
-	ErrNotFound fieldError = "field not found"
+	ErrNotFound = fieldError("godotted: field not found")
 	// ErrInvalidIndex is the error returned when an attribute references a
 	// slice/array element, but the given index is not a number.
-	ErrInvalidIndex fieldError = "invalid index"
+	ErrInvalidIndex = fieldError("godotted: invalid index")
 	// ErrIndexOutOfRange is the error returned when an attribute references a
 	// slice/array element, but the given index is less than 0 or greater than
 	// the size of the slice/array.
-	ErrIndexOutOfRange fieldError = "index out of range"
+	ErrIndexOutOfRange = fieldError("godotted: index out of range")
 	// ErrMapKeyNotString is the error returned when an attribute references a
 	// map whose keys are not of string type.
-	ErrMapKeyNotString fieldError = "map key is not of string type"
+	ErrMapKeyNotString = fieldError("godotted: map key is not of string type")
 	// ErrUnexported is the error returned when an attribute references an
 	// unexported struct field.
-	ErrUnexported fieldError = "field is unexported"
+	ErrUnexported = fieldError("godotted: field is unexported")
 	// ErrUnaddressable is the error returned from a set operation when an
 	// attribute references a value that is not addressable.
-	ErrUnaddressable fieldError = "field is unaddressable"
+	ErrUnaddressable = fieldError("godotted: field is unaddressable")
 	// ErrTypesDoNotMatch is the error returned from a set operation when an
 	// attribute references a value that has a different type than the new value.
-	ErrTypesDoNotMatch fieldError = "value type does not match field type"
+	ErrTypesDoNotMatch = fieldError("godotted: value type does not match field type")
 )
 
 // IsFieldError returns true when the given value is a fieldError.

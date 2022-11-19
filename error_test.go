@@ -15,12 +15,12 @@ func TestFieldError_Error(t *testing.T) {
 		{
 			name: "not found",
 			e:    godotted.ErrNotFound,
-			want: "field not found",
+			want: "godotted: field not found",
 		},
 		{
 			name: "unexported",
 			e:    godotted.ErrUnexported,
-			want: "field is unexported",
+			want: "godotted: field is unexported",
 		},
 	}
 	for _, tt := range tests {

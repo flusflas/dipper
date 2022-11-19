@@ -733,8 +733,8 @@ func ExampleGet() {
 	// Also can drive cars
 	// 1025
 	// Psychic immunity
-	// field not found
-	// index out of range
+	// godotted: field not found
+	// godotted: index out of range
 }
 
 func ExampleGetMany() {
@@ -775,7 +775,7 @@ func ExampleGetMany() {
 	// {
 	//   "0.Name": "Leela",
 	//   "1.About.powers.0": "Psychic immunity",
-	//   "1.Height": "field not found"
+	//   "1.Height": "godotted: field not found"
 	// }
 }
 
@@ -800,6 +800,6 @@ func ExampleSet() {
 	// <nil>
 	// <nil>
 	// <nil>
-	// field is unaddressable
+	// godotted: field is unaddressable
 	// {Amy 21 map[rich:true]}
 }
