@@ -29,7 +29,7 @@ type Fields map[string]interface{}
 // Field names and key maps are case-sensitive.
 // All the struct fields accessed must be exported.
 // If an error occurs, it will be returned as the attribute value, so it should
-// be handled. All the returned errors are FieldError.
+// be handled. All the returned errors are fieldError.
 //
 // Example:
 //
@@ -147,7 +147,7 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect
 // All the struct fields accessed must be exported.
 // ErrUnaddressable will be returned if obj is not addressable.
 // It returns nil if the value was successfully set, otherwise it will return
-// a FieldError.
+// a fieldError.
 //
 // Example:
 //

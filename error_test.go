@@ -9,7 +9,7 @@ import (
 func TestFieldError_Error(t *testing.T) {
 	tests := []struct {
 		name string
-		e    godotted.FieldError
+		e    error
 		want string
 	}{
 		{
