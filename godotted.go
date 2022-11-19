@@ -87,7 +87,7 @@ func Set(obj interface{}, attribute string, new interface{}) error {
 
 	value := reflect.ValueOf(obj)
 
-	if value.Kind() == reflect.Pointer {
+	if value.Kind() == reflect.Ptr {
 		value = value.Elem()
 	}
 
@@ -106,7 +106,7 @@ func Set(obj interface{}, attribute string, new interface{}) error {
 		optDelete = true
 	default:
 		newValue = reflect.ValueOf(new)
-		if newValue.Kind() == reflect.Pointer {
+		if newValue.Kind() == reflect.Ptr {
 			newValue = newValue.Elem()
 		}
 	}
@@ -167,7 +167,7 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect
 	for splitter.HasMore() {
 		fieldName, i = splitter.Next()
 
-		if value.Kind() == reflect.Pointer || value.Kind() == reflect.Interface {
+		if value.Kind() == reflect.Ptr || value.Kind() == reflect.Interface {
 			value = value.Elem()
 		}
 
@@ -194,7 +194,8 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect
 			if !ok {
 				return value, ErrNotFound
 			}
-			if !field.IsExported() {
+			// Check if field is unexported (method IsExported() was introduced in Go 1.17)
+			if field.PkgPath != "" {
 				return value, ErrUnexported
 			}
 
