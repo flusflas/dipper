@@ -184,10 +184,25 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect
 				break
 			}
 
-			value = value.MapIndex(reflect.ValueOf(fieldName))
-			if !value.IsValid() {
+			mapValue := value.MapIndex(reflect.ValueOf(fieldName))
+			if !mapValue.IsValid() {
+				splitterMap := newAttributeSplitter(splitter.remain, '.')
+				for splitterMap.HasMore() {
+					mapKey, _ := splitterMap.Next()
+					fieldName += "." + mapKey
+					mapValue = value.MapIndex(reflect.ValueOf(fieldName))
+					if mapValue.IsValid() {
+						splitter.remain = splitterMap.remain
+						break
+					}
+				}
+			}
+
+			if !mapValue.IsValid() {
 				return value, ErrNotFound
 			}
+
+			value = mapValue
 
 		case reflect.Struct:
 			field, ok := value.Type().FieldByName(fieldName)

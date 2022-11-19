@@ -116,6 +116,16 @@ func TestGet(t *testing.T) {
 			want: godotted.ErrMapKeyNotString,
 		},
 		{
+			name: "map with dotted keys",
+			args: args{
+				v: map[string]interface{}{
+					"1.0": []string{"Initial release", "Buf fix"},
+				},
+				attribute: "1.0.0",
+			},
+			want: "Initial release",
+		},
+		{
 			name: "slice in struct",
 			args: args{
 				v:         testStruct,
