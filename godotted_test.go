@@ -514,6 +514,53 @@ func TestSet(t *testing.T) {
 			},
 		},
 		{
+			name: "update map with dotted keys",
+			args: args{
+				attribute: "1.0.0",
+				v: map[string]interface{}{
+					"1.0": []string{"Initial release", "Buf fix"},
+				},
+				newValue: "First version",
+			},
+			want: want{
+				result:   nil,
+				newValue: "First version",
+			},
+		},
+		{
+			name: "update map with dotted keys 2",
+			args: args{
+				attribute: "1.0.0",
+				v: map[string]interface{}{
+					"1.0.0": "Initial release",
+					"1.0.1": "Buf fix",
+				},
+				newValue: "First version",
+			},
+			want: want{
+				result:   nil,
+				newValue: "First version",
+			},
+		},
+		{
+			name: "update map with dotted keys 3",
+			args: args{
+				attribute: "1.0.1.beta",
+				v: map[string]interface{}{
+					"1.0.0.beta": "Initial release",
+					"1.0": map[string]interface{}{
+						"1.beta": "Buf fix",
+						"2.beta": "Another buf fix",
+					},
+				},
+				newValue: "It wasn't me",
+			},
+			want: want{
+				result:   nil,
+				newValue: "It wasn't me",
+			},
+		},
+		{
 			name: "delete map key",
 			args: args{
 				attribute: "foo",

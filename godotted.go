@@ -38,7 +38,7 @@ type Fields map[string]interface{}
 //	    return err
 //	}
 func Get(obj interface{}, attribute string) interface{} {
-	value, err := getReflectValue(reflect.ValueOf(obj), attribute, false)
+	value, _, err := getReflectValue(reflect.ValueOf(obj), attribute, false)
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,8 @@ func Set(obj interface{}, attribute string, new interface{}) error {
 		value = value.Elem()
 	}
 
-	value, err = getReflectValue(value, attribute, true)
+	var lastField string
+	value, lastField, err = getReflectValue(value, attribute, true)
 	if err != nil {
 		return err
 	}
@@ -119,8 +120,6 @@ func Set(obj interface{}, attribute string, new interface{}) error {
 			}
 		}
 
-		key := lastField(attribute)
-
 		// Initialize map if needed
 		if value.IsNil() {
 			keyType := value.Type().Key()
@@ -129,7 +128,7 @@ func Set(obj interface{}, attribute string, new interface{}) error {
 			value.Set(reflect.MakeMapWithSize(mapType, 0))
 		}
 
-		value.SetMapIndex(reflect.ValueOf(key), newValue)
+		value.SetMapIndex(reflect.ValueOf(lastField), newValue)
 	} else {
 		if !optZero && !optDelete {
 			if !value.CanAddr() {
@@ -152,13 +151,13 @@ func Set(obj interface{}, attribute string, new interface{}) error {
 // toSet indicates that the function must return a value that will be set to
 // another value, which is used in the special case of maps (maps elements are
 // not addressable).
-func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect.Value, error) {
+// It also returns the name of the accessed field.
+func getReflectValue(value reflect.Value, attribute string, toSet bool) (_ reflect.Value, fieldName string, _ error) {
 	if attribute == "" {
-		return value, nil
+		return value, "", nil
 	}
 
 	var i, maxSetDepth int
-	var fieldName string
 	if toSet {
 		maxSetDepth = strings.Count(attribute, ".")
 	}
@@ -176,30 +175,39 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect
 			// Check that the map accept string keys
 			keyKind := value.Type().Key().Kind()
 			if keyKind != reflect.String && keyKind != reflect.Interface {
-				return value, ErrMapKeyNotString
+				return value, "", ErrMapKeyNotString
 			}
 
 			// If a map key has to be set, skip the last attribute and return the map
 			if toSet && i == maxSetDepth {
-				break
+				return value, fieldName, nil
 			}
 
 			mapValue := value.MapIndex(reflect.ValueOf(fieldName))
+
+			// If the key is not found, it could be because is a dotted key,
+			// so try expanding the search with more fields
 			if !mapValue.IsValid() {
 				splitterMap := newAttributeSplitter(splitter.remain, '.')
 				for splitterMap.HasMore() {
-					mapKey, _ := splitterMap.Next()
+					mapKey, mapIndex := splitterMap.Next()
 					fieldName += "." + mapKey
 					mapValue = value.MapIndex(reflect.ValueOf(fieldName))
 					if mapValue.IsValid() {
+						// Re-adjust values and splitter
+						maxSetDepth -= mapIndex + 1
+						if toSet && i == maxSetDepth {
+							return value, fieldName, nil
+						}
 						splitter.remain = splitterMap.remain
+						splitter.hasMore = splitterMap.hasMore
 						break
 					}
 				}
 			}
 
 			if !mapValue.IsValid() {
-				return value, ErrNotFound
+				return value, "", ErrNotFound
 			}
 
 			value = mapValue
@@ -207,11 +215,11 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect
 		case reflect.Struct:
 			field, ok := value.Type().FieldByName(fieldName)
 			if !ok {
-				return value, ErrNotFound
+				return value, "", ErrNotFound
 			}
 			// Check if field is unexported (method IsExported() was introduced in Go 1.17)
 			if field.PkgPath != "" {
-				return value, ErrUnexported
+				return value, "", ErrUnexported
 			}
 
 			value = value.FieldByName(fieldName)
@@ -219,26 +227,18 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect
 		case reflect.Slice, reflect.Array:
 			sliceIndex, err := strconv.Atoi(fieldName)
 			if err != nil {
-				return value, ErrInvalidIndex
+				return value, "", ErrInvalidIndex
 			}
 			if sliceIndex < 0 || sliceIndex >= value.Len() {
-				return value, ErrIndexOutOfRange
+				return value, "", ErrIndexOutOfRange
 			}
 			field := value.Index(sliceIndex)
 			value = field
 
 		default:
-			return value, ErrNotFound
+			return value, "", ErrNotFound
 		}
 	}
 
-	return value, nil
-}
-
-func lastField(s string) string {
-	index := strings.LastIndexByte(s, '.')
-	if index == -1 {
-		return s
-	}
-	return s[index+1:]
+	return value, fieldName, nil
 }
