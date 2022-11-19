@@ -1,5 +1,7 @@
 package godotted
 
+// FieldError is an error indicating a wrong operation getting or setting a
+// value using the godotted package.
 type FieldError string
 
 func (e FieldError) Error() string {
@@ -7,12 +9,28 @@ func (e FieldError) Error() string {
 }
 
 const (
-	ErrNotFound        FieldError = "field not found"
-	ErrInvalidIndex    FieldError = "invalid index"
+	// ErrNotFound is the error returned when an attribute is not found.
+	// Depending on the type of the accessed attribute, it can mean that the
+	// attribute does not exist as a struct field or as a map key.
+	ErrNotFound FieldError = "field not found"
+	// ErrInvalidIndex is the error returned when an attribute references a
+	// slice/array element, but the given index is not a number.
+	ErrInvalidIndex FieldError = "invalid index"
+	// ErrIndexOutOfRange is the error returned when an attribute references a
+	// slice/array element, but the given index is less than 0 or greater than
+	// the size of the slice/array.
 	ErrIndexOutOfRange FieldError = "index out of range"
+	// ErrMapKeyNotString is the error returned when an attribute references a
+	// map whose keys are not of string type.
 	ErrMapKeyNotString FieldError = "map key is not of string type"
-	ErrUnexported      FieldError = "field is unexported"
-	ErrUnaddressable   FieldError = "field is unaddressable"
+	// ErrUnexported is the error returned when an attribute references an
+	// unexported struct field.
+	ErrUnexported FieldError = "field is unexported"
+	// ErrUnaddressable is the error returned from a set operation when an
+	// attribute references a value that is not addressable.
+	ErrUnaddressable FieldError = "field is unaddressable"
+	// ErrTypesDoNotMatch is the error returned from a set operation when an
+	// attribute references a value that has a different type than the new value.
 	ErrTypesDoNotMatch FieldError = "value type does not match field type"
 )
 

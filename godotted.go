@@ -1,3 +1,5 @@
+// Package godotted implements functions to access (get or set) values of a
+// generic type using dot notation.
 package godotted
 
 import (
@@ -17,8 +19,24 @@ const (
 	Delete setOption = 1
 )
 
+// Fields defines an attribute-value map type, containing the requested
+// attributes as the map keys and their resolved values as the map values.
+// It implements convenience methods to handle returned errors.
 type Fields map[string]interface{}
 
+// Get returns the value of the given obj attribute. The attribute uses
+// dot-notation to allow accessing nested fields, slice elements or map keys.
+// Field names and key maps are case-sensitive.
+// All the struct fields accessed must be exported.
+// If an error occurs, it will be returned as the attribute value, so it should
+// be handled. All the returned errors are FieldError.
+//
+// Example:
+//
+//	v := Get(myObj, "SomeStructField.1.some_key_map")
+//	if err := Error(v); err != nil {
+//	    return err
+//	}
 func Get(obj interface{}, attribute string) interface{} {
 	value, err := getReflectValue(reflect.ValueOf(obj), attribute, false)
 	if err != nil {
@@ -27,6 +45,17 @@ func Get(obj interface{}, attribute string) interface{} {
 	return value.Interface()
 }
 
+// GetMany returns a map with the values of the given obj attributes.
+// It works as Get(), but it takes a slice of attributes to return their
+// corresponding values. The returned map will have the same length as the
+// attributes slice, with the attributes as keys.
+//
+// Example:
+//
+//	v := GetMany(myObj, []string{"Name", "Age", "Skills.skydiving})
+//	if err := v.FirstError(); err != nil {
+//	    return err
+//	}
 func GetMany(obj interface{}, attributes []string) Fields {
 	m := make(Fields, len(attributes))
 
@@ -39,6 +68,12 @@ func GetMany(obj interface{}, attributes []string) Fields {
 	return m
 }
 
+// getReflectValue gets the reflect.Value of the given value attribute.
+// It splits the attribute into the field names, map keys and slice indexes
+// and uses reflection to get the final value.
+// toSet indicates that the function must return a value that will be set to
+// another value, which is used in the special case of maps (maps elements are
+// not addressable).
 func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect.Value, error) {
 	if attribute == "" {
 		return value, nil
@@ -106,6 +141,20 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect
 	return value, nil
 }
 
+// Set sets the value of the given obj attribute to the specified new value.
+// The attribute uses dot-notation to allow accessing nested fields, slice
+// elements or map keys. Field names and key maps are case-sensitive.
+// All the struct fields accessed must be exported.
+// ErrUnaddressable will be returned if obj is not addressable.
+// It returns nil if the value was successfully set, otherwise it will return
+// a FieldError.
+//
+// Example:
+//
+//	v := Set(&myObj, "SomeStructField.1.some_key_map", 123)
+//	if err != nil {
+//	    return err
+//	}
 func Set(obj interface{}, attribute string, new interface{}) error {
 	var err error
 
