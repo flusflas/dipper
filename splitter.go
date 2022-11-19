@@ -5,14 +5,14 @@ import "strings"
 // attributeSplitter offers methods to iterate the fields of a dot-separated
 // string.
 type attributeSplitter struct {
-	sep     string
+	sep     byte
 	index   int
 	remain  string
 	hasMore bool
 }
 
 // newAttributeSplitter returns a new attributeSplitter instance.
-func newAttributeSplitter(s, sep string) *attributeSplitter {
+func newAttributeSplitter(s string, sep byte) *attributeSplitter {
 	return &attributeSplitter{sep: sep, index: -1, remain: s, hasMore: true}
 }
 
@@ -30,7 +30,7 @@ func (s *attributeSplitter) Next() (string, int) {
 		return "", -1
 	}
 	remain = s.remain
-	index := strings.Index(remain, s.sep)
+	index := strings.IndexByte(remain, s.sep)
 	if index == -1 {
 		s.hasMore = false
 		return s.remain, s.index + 1

@@ -85,7 +85,7 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect
 		maxSetDepth = strings.Count(attribute, ".")
 	}
 
-	splitter := newAttributeSplitter(attribute, ".")
+	splitter := newAttributeSplitter(attribute, '.')
 	for splitter.HasMore() {
 		fieldName, i = splitter.Next()
 

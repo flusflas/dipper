@@ -8,7 +8,7 @@ import (
 func TestAttributeSplitter(t *testing.T) {
 	type args struct {
 		s   string
-		sep string
+		sep byte
 	}
 	tests := []struct {
 		name string
@@ -17,17 +17,17 @@ func TestAttributeSplitter(t *testing.T) {
 	}{
 		{
 			name: "01",
-			args: args{s: "foo.bar", sep: "."},
+			args: args{s: "foo.bar", sep: '.'},
 			want: []string{"foo", "bar"},
 		},
 		{
 			name: "02",
-			args: args{s: ".a.b.c.d.e.f.g.h.", sep: "."},
+			args: args{s: ".a.b.c.d.e.f.g.h.", sep: '.'},
 			want: []string{"", "a", "b", "c", "d", "e", "f", "g", "h", ""},
 		},
 		{
 			name: "03",
-			args: args{s: "", sep: "."},
+			args: args{s: "", sep: '.'},
 			want: []string{""},
 		},
 	}
