@@ -68,6 +68,84 @@ func GetMany(obj interface{}, attributes []string) Fields {
 	return m
 }
 
+// Set sets the value of the given obj attribute to the specified new value.
+// The attribute uses dot-notation to allow accessing nested fields, slice
+// elements or map keys. Field names and key maps are case-sensitive.
+// All the struct fields accessed must be exported.
+// ErrUnaddressable will be returned if obj is not addressable.
+// It returns nil if the value was successfully set, otherwise it will return
+// a fieldError.
+//
+// Example:
+//
+//	v := Set(&myObj, "SomeStructField.1.some_key_map", 123)
+//	if err != nil {
+//	    return err
+//	}
+func Set(obj interface{}, attribute string, new interface{}) error {
+	var err error
+
+	value := reflect.ValueOf(obj)
+
+	if value.Kind() == reflect.Pointer {
+		value = value.Elem()
+	}
+
+	value, err = getReflectValue(value, attribute, true)
+	if err != nil {
+		return err
+	}
+
+	var optZero, optDelete bool
+
+	var newValue reflect.Value
+	switch new {
+	case Zero:
+		optZero = true
+	case Delete:
+		optDelete = true
+	default:
+		newValue = reflect.ValueOf(new)
+		if newValue.Kind() == reflect.Pointer {
+			newValue = newValue.Elem()
+		}
+	}
+
+	if value.Kind() == reflect.Map {
+		if !optZero && !optDelete {
+			mapValueType := value.Type().Elem()
+			if mapValueType.Kind() != reflect.Interface && mapValueType != newValue.Type() {
+				return ErrTypesDoNotMatch
+			}
+		}
+
+		key := lastField(attribute)
+
+		// Initialize map if needed
+		if value.IsNil() {
+			keyType := value.Type().Key()
+			valueType := value.Type().Elem()
+			mapType := reflect.MapOf(keyType, valueType)
+			value.Set(reflect.MakeMapWithSize(mapType, 0))
+		}
+
+		value.SetMapIndex(reflect.ValueOf(key), newValue)
+	} else {
+		if !optZero && !optDelete {
+			if !value.CanAddr() {
+				return ErrUnaddressable
+			}
+			if value.Kind() != reflect.Interface && value.Type() != newValue.Type() {
+				return ErrTypesDoNotMatch
+			}
+		} else {
+			newValue = reflect.Zero(value.Type())
+		}
+		value.Set(newValue)
+	}
+	return nil
+}
+
 // getReflectValue gets the reflect.Value of the given value attribute.
 // It splits the attribute into the field names, map keys and slice indexes
 // and uses reflection to get the final value.
@@ -141,85 +219,7 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (reflect
 	return value, nil
 }
 
-// Set sets the value of the given obj attribute to the specified new value.
-// The attribute uses dot-notation to allow accessing nested fields, slice
-// elements or map keys. Field names and key maps are case-sensitive.
-// All the struct fields accessed must be exported.
-// ErrUnaddressable will be returned if obj is not addressable.
-// It returns nil if the value was successfully set, otherwise it will return
-// a fieldError.
-//
-// Example:
-//
-//	v := Set(&myObj, "SomeStructField.1.some_key_map", 123)
-//	if err != nil {
-//	    return err
-//	}
-func Set(obj interface{}, attribute string, new interface{}) error {
-	var err error
-
-	value := reflect.ValueOf(obj)
-
-	if value.Kind() == reflect.Pointer {
-		value = value.Elem()
-	}
-
-	value, err = getReflectValue(value, attribute, true)
-	if err != nil {
-		return err
-	}
-
-	var optZero, optDelete bool
-
-	var newValue reflect.Value
-	switch new {
-	case Zero:
-		optZero = true
-	case Delete:
-		optDelete = true
-	default:
-		newValue = reflect.ValueOf(new)
-		if newValue.Kind() == reflect.Pointer {
-			newValue = newValue.Elem()
-		}
-	}
-
-	if value.Kind() == reflect.Map {
-		if !optZero && !optDelete {
-			mapValueType := value.Type().Elem()
-			if mapValueType.Kind() != reflect.Interface && mapValueType != newValue.Type() {
-				return ErrTypesDoNotMatch
-			}
-		}
-
-		key := lastStringPart(attribute)
-
-		// Initialize map if needed
-		if value.IsNil() {
-			keyType := value.Type().Key()
-			valueType := value.Type().Elem()
-			mapType := reflect.MapOf(keyType, valueType)
-			value.Set(reflect.MakeMapWithSize(mapType, 0))
-		}
-
-		value.SetMapIndex(reflect.ValueOf(key), newValue)
-	} else {
-		if !optZero && !optDelete {
-			if !value.CanAddr() {
-				return ErrUnaddressable
-			}
-			if value.Kind() != reflect.Interface && value.Type() != newValue.Type() {
-				return ErrTypesDoNotMatch
-			}
-		} else {
-			newValue = reflect.Zero(value.Type())
-		}
-		value.Set(newValue)
-	}
-	return nil
-}
-
-func lastStringPart(s string) string {
+func lastField(s string) string {
 	index := strings.LastIndexByte(s, '.')
 	if index == -1 {
 		return s
