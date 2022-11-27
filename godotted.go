@@ -162,7 +162,7 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (_ refle
 		maxSetDepth = strings.Count(attribute, ".")
 	}
 
-	splitter := newAttributeSplitter(attribute, '.')
+	splitter := newAttributeSplitter(attribute, ".")
 	for splitter.HasMore() {
 		fieldName, i = splitter.Next()
 
@@ -188,7 +188,7 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (_ refle
 			// If the key is not found, it could be because is a dotted key,
 			// so try expanding the search with more fields
 			if !mapValue.IsValid() {
-				splitterMap := newAttributeSplitter(splitter.remain, '.')
+				splitterMap := newAttributeSplitter(splitter.remain, ".")
 				for splitterMap.HasMore() {
 					mapKey, mapIndex := splitterMap.Next()
 					fieldName += "." + mapKey

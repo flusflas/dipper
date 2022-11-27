@@ -2,17 +2,17 @@ package godotted
 
 import "strings"
 
-// attributeSplitter offers methods to iterate the fields of a dot-separated
-// string.
+// attributeSplitter offers methods to iterate the substrings of a string
+// using a given separator.
 type attributeSplitter struct {
-	sep     byte
+	sep     string
 	index   int
 	remain  string
 	hasMore bool
 }
 
 // newAttributeSplitter returns a new attributeSplitter instance.
-func newAttributeSplitter(s string, sep byte) *attributeSplitter {
+func newAttributeSplitter(s, sep string) *attributeSplitter {
 	return &attributeSplitter{sep: sep, index: -1, remain: s, hasMore: true}
 }
 
@@ -30,12 +30,12 @@ func (s *attributeSplitter) Next() (string, int) {
 		return "", -1
 	}
 	remain = s.remain
-	index := strings.IndexByte(remain, s.sep)
+	index := strings.Index(remain, s.sep)
 	if index == -1 {
 		s.hasMore = false
 		return s.remain, s.index + 1
 	}
 	s.index++
-	s.remain = remain[index+1:]
+	s.remain = remain[index+len(s.sep):]
 	return remain[:index], s.index
 }
