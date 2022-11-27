@@ -38,7 +38,7 @@ type Fields map[string]interface{}
 //	    return err
 //	}
 func Get(obj interface{}, attribute string) interface{} {
-	value, _, err := getReflectValue(reflect.ValueOf(obj), attribute, false)
+	value, _, err := getReflectValue(reflect.ValueOf(obj), attribute, ".", false)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func Set(obj interface{}, attribute string, new interface{}) error {
 	}
 
 	var lastField string
-	value, lastField, err = getReflectValue(value, attribute, true)
+	value, lastField, err = getReflectValue(value, attribute, ".", true)
 	if err != nil {
 		return err
 	}
@@ -152,17 +152,17 @@ func Set(obj interface{}, attribute string, new interface{}) error {
 // another value, which is used in the special case of maps (maps elements are
 // not addressable).
 // It also returns the name of the accessed field.
-func getReflectValue(value reflect.Value, attribute string, toSet bool) (_ reflect.Value, fieldName string, _ error) {
+func getReflectValue(value reflect.Value, attribute string, sep string, toSet bool) (_ reflect.Value, fieldName string, _ error) {
 	if attribute == "" {
 		return value, "", nil
 	}
 
 	var i, maxSetDepth int
 	if toSet {
-		maxSetDepth = strings.Count(attribute, ".")
+		maxSetDepth = strings.Count(attribute, sep)
 	}
 
-	splitter := newAttributeSplitter(attribute, ".")
+	splitter := newAttributeSplitter(attribute, sep)
 	for splitter.HasMore() {
 		fieldName, i = splitter.Next()
 
@@ -188,7 +188,7 @@ func getReflectValue(value reflect.Value, attribute string, toSet bool) (_ refle
 			// If the key is not found, it could be because is a dotted key,
 			// so try expanding the search with more fields
 			if !mapValue.IsValid() {
-				splitterMap := newAttributeSplitter(splitter.remain, ".")
+				splitterMap := newAttributeSplitter(splitter.remain, sep)
 				for splitterMap.HasMore() {
 					mapKey, mapIndex := splitterMap.Next()
 					fieldName += "." + mapKey
