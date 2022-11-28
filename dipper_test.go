@@ -4,11 +4,37 @@ import (
 	"godotted"
 	"reflect"
 	"testing"
+	"time"
 )
 
-func TestDipper_Get(t *testing.T) {
+type Publication struct {
+	ISBN string
+}
 
-	testStruct := &Book{
+type Author struct {
+	Name      string
+	BirthDate time.Time
+}
+
+type Book struct {
+	Title  string
+	Year   int
+	Author Author
+	Genres []string
+	Extra  map[interface{}]interface{}
+	Any    interface{}
+	Publication
+}
+
+func intPtr(v int) *int { return &v }
+
+func mustParseDate(date string) time.Time {
+	t, _ := time.Parse("2006-01-02", date)
+	return t
+}
+
+func getTestStruct() *Book {
+	return &Book{
 		Title: "El nombre de la rosa",
 		Year:  1980,
 		Author: Author{
@@ -25,7 +51,9 @@ func TestDipper_Get(t *testing.T) {
 			ISBN: "1234567890",
 		},
 	}
+}
 
+func TestDipper_Get(t *testing.T) {
 	type args struct {
 		obj       interface{}
 		attribute string
@@ -40,15 +68,15 @@ func TestDipper_Get(t *testing.T) {
 		{
 			name: "empty attribute",
 			args: args{
-				obj:       testStruct,
+				obj:       getTestStruct(),
 				attribute: "",
 			},
-			want: testStruct,
+			want: getTestStruct(),
 		},
 		{
 			name: "struct",
 			args: args{
-				obj:       testStruct,
+				obj:       getTestStruct(),
 				attribute: "Author",
 			},
 			want: Author{
@@ -59,7 +87,7 @@ func TestDipper_Get(t *testing.T) {
 		{
 			name: "map 1",
 			args: args{
-				obj:       testStruct,
+				obj:       getTestStruct(),
 				attribute: "Extra.foo",
 			},
 			want: map[string]int{"bar": 123},
@@ -68,7 +96,7 @@ func TestDipper_Get(t *testing.T) {
 			name:      "map 2",
 			separator: "/",
 			args: args{
-				obj:       testStruct,
+				obj:       getTestStruct(),
 				attribute: "Extra/foo/bar",
 			},
 			want: 123,
@@ -102,7 +130,7 @@ func TestDipper_Get(t *testing.T) {
 		{
 			name: "slice in struct",
 			args: args{
-				obj:       testStruct,
+				obj:       getTestStruct(),
 				attribute: "Genres.1",
 			},
 			want: "Crime",
@@ -124,7 +152,7 @@ func TestDipper_Get(t *testing.T) {
 		{
 			name: "not found",
 			args: args{
-				obj:       testStruct,
+				obj:       getTestStruct(),
 				attribute: "foo",
 			},
 			want: godotted.ErrNotFound,
@@ -132,7 +160,7 @@ func TestDipper_Get(t *testing.T) {
 		{
 			name: "invalid index",
 			args: args{
-				obj:       testStruct,
+				obj:       getTestStruct(),
 				attribute: "Genres.a",
 			},
 			want: godotted.ErrInvalidIndex,
@@ -140,7 +168,7 @@ func TestDipper_Get(t *testing.T) {
 		{
 			name: "index out of range",
 			args: args{
-				obj:       testStruct,
+				obj:       getTestStruct(),
 				attribute: "Genres.2",
 			},
 			want: godotted.ErrIndexOutOfRange,
@@ -148,7 +176,7 @@ func TestDipper_Get(t *testing.T) {
 		{
 			name: "negative index",
 			args: args{
-				obj:       testStruct,
+				obj:       getTestStruct(),
 				attribute: "Genres.-1",
 			},
 			want: godotted.ErrIndexOutOfRange,
@@ -156,7 +184,7 @@ func TestDipper_Get(t *testing.T) {
 		{
 			name: "unexported",
 			args: args{
-				obj:       testStruct,
+				obj:       getTestStruct(),
 				attribute: "Author.BirthDate.wall",
 			},
 			want: godotted.ErrUnexported,
@@ -188,23 +216,7 @@ func TestDipper_GetMany(t *testing.T) {
 			name:      "struct",
 			separator: "->",
 			args: args{
-				obj: Book{
-					Title: "El nombre de la rosa",
-					Year:  1980,
-					Author: Author{
-						Name:      "Umberto Eco",
-						BirthDate: mustParseDate("1932-07-05"),
-					},
-					Genres: []string{"Mystery", "Crime"},
-					Extra: map[interface{}]interface{}{
-						"foo": map[string]int{
-							"bar": 123,
-						},
-					},
-					Publication: Publication{
-						ISBN: "1234567890",
-					},
-				},
+				obj: getTestStruct(),
 				attributes: []string{
 					"Author",
 					"Author->BirthDate",
