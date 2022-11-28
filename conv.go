@@ -1,6 +1,7 @@
-// Package godotted implements functions to access (get or set) values of a
-// generic type using dot notation.
 package godotted
+
+// This file contains convenience functions using a default Dipper instance
+// prepared for dot-notation.
 
 var defaultDipper = New(Options{Separator: "."})
 
