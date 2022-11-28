@@ -10,7 +10,7 @@ import (
 
 func TestGet(t *testing.T) {
 	type args struct {
-		v         interface{}
+		obj       interface{}
 		attribute string
 	}
 	tests := []struct {
@@ -21,7 +21,7 @@ func TestGet(t *testing.T) {
 		{
 			name: "struct",
 			args: args{
-				v:         getTestStruct(),
+				obj:       getTestStruct(),
 				attribute: "Author.Name",
 			},
 			want: "Umberto Eco",
@@ -29,15 +29,25 @@ func TestGet(t *testing.T) {
 		{
 			name: "map",
 			args: args{
-				v:         getTestStruct(),
+				obj:       getTestStruct(),
 				attribute: "Extra.foo.bar",
 			},
 			want: 123,
 		},
+		{
+			name: "map with dotted keys",
+			args: args{
+				obj: map[string]interface{}{
+					"1.0": []string{"Initial release", "Buf fix"},
+				},
+				attribute: "1.0.0",
+			},
+			want: godotted.ErrNotFound,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := godotted.Get(tt.args.v, tt.args.attribute)
+			got := godotted.Get(tt.args.obj, tt.args.attribute)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Get() = %v, want %v", got, tt.want)
 			}
@@ -47,7 +57,7 @@ func TestGet(t *testing.T) {
 
 func TestGetMany(t *testing.T) {
 	type args struct {
-		v          interface{}
+		obj        interface{}
 		attributes []string
 	}
 	tests := []struct {
@@ -58,7 +68,7 @@ func TestGetMany(t *testing.T) {
 		{
 			name: "struct",
 			args: args{
-				v: getTestStruct(),
+				obj: getTestStruct(),
 				attributes: []string{
 					"Author",
 					"Author.BirthDate",
@@ -85,7 +95,7 @@ func TestGetMany(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := godotted.GetMany(tt.args.v, tt.args.attributes)
+			got := godotted.GetMany(tt.args.obj, tt.args.attributes)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetMany() = %v, want %v", got, tt.want)
 			}
@@ -96,7 +106,7 @@ func TestGetMany(t *testing.T) {
 func TestSet(t *testing.T) {
 
 	type args struct {
-		v         interface{}
+		obj       interface{}
 		attribute string
 		newValue  interface{}
 	}
@@ -114,7 +124,7 @@ func TestSet(t *testing.T) {
 			name: "update int value in struct",
 			args: args{
 				attribute: "Publication.ISBN",
-				v:         getTestStruct(),
+				obj:       getTestStruct(),
 				newValue:  "9788845207051",
 			},
 			want: want{
@@ -125,12 +135,12 @@ func TestSet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := godotted.Set(tt.args.v, tt.args.attribute, tt.args.newValue)
+			got := godotted.Set(tt.args.obj, tt.args.attribute, tt.args.newValue)
 			if !reflect.DeepEqual(got, tt.want.result) {
 				t.Errorf("Set() = %v, want %v", got, tt.want)
 			}
 			if tt.want.result == nil {
-				newValue := godotted.Get(tt.args.v, tt.args.attribute)
+				newValue := godotted.Get(tt.args.obj, tt.args.attribute)
 				if tt.want.deleted && newValue != godotted.ErrNotFound {
 					t.Errorf("Set() => Map value was not deleted")
 				}

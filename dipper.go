@@ -203,28 +203,6 @@ func getReflectValue(value reflect.Value, attribute string, sep string, toSet bo
 			}
 
 			mapValue := value.MapIndex(reflect.ValueOf(fieldName))
-
-			// If the key is not found, it could be because the key includes
-			// the separator, so try expanding the search with more fields
-			if !mapValue.IsValid() {
-				splitterMap := newAttributeSplitter(splitter.remain, sep)
-				for splitterMap.HasMore() {
-					mapKey, mapIndex := splitterMap.Next()
-					fieldName += "." + mapKey
-					mapValue = value.MapIndex(reflect.ValueOf(fieldName))
-					if mapValue.IsValid() {
-						// Re-adjust values and splitter
-						maxSetDepth -= mapIndex + 1
-						if toSet && i == maxSetDepth {
-							return value, fieldName, nil
-						}
-						splitter.remain = splitterMap.remain
-						splitter.hasMore = splitterMap.hasMore
-						break
-					}
-				}
-			}
-
 			if !mapValue.IsValid() {
 				return value, "", ErrNotFound
 			}

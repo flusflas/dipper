@@ -118,12 +118,13 @@ func TestDipper_Get(t *testing.T) {
 			want: godotted.ErrMapKeyNotString,
 		},
 		{
-			name: "map with dotted keys",
+			name:      "map with dotted keys",
+			separator: "/",
 			args: args{
 				obj: map[string]interface{}{
 					"1.0": []string{"Initial release", "Buf fix"},
 				},
-				attribute: "1.0.0",
+				attribute: "1.0/0",
 			},
 			want: "Initial release",
 		},
@@ -505,9 +506,10 @@ func TestDipper_Set(t *testing.T) {
 			},
 		},
 		{
-			name: "update map with dotted keys",
+			name:      "update map with dotted keys",
+			separator: "/",
 			args: args{
-				attribute: "1.0.0",
+				attribute: "1.0/0",
 				v: map[string]interface{}{
 					"1.0": []string{"Initial release", "Buf fix"},
 				},
@@ -519,7 +521,8 @@ func TestDipper_Set(t *testing.T) {
 			},
 		},
 		{
-			name: "update map with dotted keys 2",
+			name:      "update map with dotted keys 2",
+			separator: "/",
 			args: args{
 				attribute: "1.0.0",
 				v: map[string]interface{}{
@@ -534,9 +537,10 @@ func TestDipper_Set(t *testing.T) {
 			},
 		},
 		{
-			name: "update map with dotted keys 3",
+			name:      "update map with dotted keys 3",
+			separator: "/",
 			args: args{
-				attribute: "1.0.1.beta",
+				attribute: "1.0/1.beta",
 				v: map[string]interface{}{
 					"1.0.0.beta": "Initial release",
 					"1.0": map[string]interface{}{
