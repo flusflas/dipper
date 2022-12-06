@@ -1,7 +1,7 @@
 package dipper
 
 // This file contains convenience functions using a default Dipper instance
-// prepared for dot-notation.
+// prepared for dot notation.
 
 var defaultDipper = New(Options{Separator: "."})
 
@@ -11,7 +11,7 @@ var defaultDipper = New(Options{Separator: "."})
 type Fields map[string]interface{}
 
 // Get uses a default Dipper instance to return the value of the given obj
-// attribute. The attribute uses dot-notation to allow accessing nested fields,
+// attribute. The attribute uses dot notation to allow accessing nested fields,
 // slice elements or map keys. Field names and key maps are case-sensitive.
 // All the struct fields accessed must be exported.
 // If an error occurs, it will be returned as the attribute value, so it should
@@ -44,7 +44,7 @@ func GetMany(obj interface{}, attributes []string) Fields {
 
 // Set uses a default Dipper instance to set the value of the given obj
 // attribute to the new provided value.
-// The attribute uses dot-notation to allow accessing nested fields, slice
+// The attribute uses dot notation to allow accessing nested fields, slice
 // elements or map keys. Field names and key maps are case-sensitive.
 // All the struct fields accessed must be exported.
 // ErrUnaddressable will be returned if obj is not addressable.
