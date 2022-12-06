@@ -510,37 +510,6 @@ func TestDipper_Set(t *testing.T) {
 			name:      "update map with dotted keys",
 			separator: "/",
 			args: args{
-				attribute: "1.0/0",
-				v: map[string]interface{}{
-					"1.0": []string{"Initial release", "Buf fix"},
-				},
-				newValue: "First version",
-			},
-			want: want{
-				result:   nil,
-				newValue: "First version",
-			},
-		},
-		{
-			name:      "update map with dotted keys 2",
-			separator: "/",
-			args: args{
-				attribute: "1.0.0",
-				v: map[string]interface{}{
-					"1.0.0": "Initial release",
-					"1.0.1": "Buf fix",
-				},
-				newValue: "First version",
-			},
-			want: want{
-				result:   nil,
-				newValue: "First version",
-			},
-		},
-		{
-			name:      "update map with dotted keys 3",
-			separator: "/",
-			args: args{
 				attribute: "1.0/1.beta",
 				v: map[string]interface{}{
 					"1.0.0.beta": "Initial release",
@@ -549,11 +518,11 @@ func TestDipper_Set(t *testing.T) {
 						"2.beta": "Another buf fix",
 					},
 				},
-				newValue: "It wasn't me",
+				newValue: "First bug fix",
 			},
 			want: want{
 				result:   nil,
-				newValue: "It wasn't me",
+				newValue: "First bug fix",
 			},
 		},
 		{
