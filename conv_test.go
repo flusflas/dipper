@@ -1,11 +1,12 @@
-package godotted_test
+package dipper_test
 
 import (
 	"encoding/json"
 	"fmt"
-	"godotted"
 	"reflect"
 	"testing"
+
+	"github.com/flusflas/dipper"
 )
 
 func TestGet(t *testing.T) {
@@ -42,12 +43,12 @@ func TestGet(t *testing.T) {
 				},
 				attribute: "1.0.0",
 			},
-			want: godotted.ErrNotFound,
+			want: dipper.ErrNotFound,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := godotted.Get(tt.args.obj, tt.args.attribute)
+			got := dipper.Get(tt.args.obj, tt.args.attribute)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Get() = %v, want %v", got, tt.want)
 			}
@@ -63,7 +64,7 @@ func TestGetMany(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want godotted.Fields
+		want dipper.Fields
 	}{
 		{
 			name: "struct",
@@ -85,17 +86,17 @@ func TestGetMany(t *testing.T) {
 					BirthDate: mustParseDate("1932-07-05"),
 				},
 				"Author.BirthDate":      mustParseDate("1932-07-05"),
-				"Name":                  godotted.ErrNotFound,
+				"Name":                  dipper.ErrNotFound,
 				"Publication.ISBN":      "1234567890",
 				"Genres.1":              "Crime",
-				"Author.BirthDate.wall": godotted.ErrUnexported,
+				"Author.BirthDate.wall": dipper.ErrUnexported,
 				"Extra.foo":             map[string]int{"bar": 123},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := godotted.GetMany(tt.args.obj, tt.args.attributes)
+			got := dipper.GetMany(tt.args.obj, tt.args.attributes)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetMany() = %v, want %v", got, tt.want)
 			}
@@ -135,13 +136,13 @@ func TestSet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := godotted.Set(tt.args.obj, tt.args.attribute, tt.args.newValue)
+			got := dipper.Set(tt.args.obj, tt.args.attribute, tt.args.newValue)
 			if !reflect.DeepEqual(got, tt.want.result) {
 				t.Errorf("Set() = %v, want %v", got, tt.want)
 			}
 			if tt.want.result == nil {
-				newValue := godotted.Get(tt.args.obj, tt.args.attribute)
-				if tt.want.deleted && newValue != godotted.ErrNotFound {
+				newValue := dipper.Get(tt.args.obj, tt.args.attribute)
+				if tt.want.deleted && newValue != dipper.ErrNotFound {
 					t.Errorf("Set() => Map value was not deleted")
 				}
 
@@ -178,20 +179,20 @@ func ExampleGet() {
 		},
 	}
 
-	fmt.Println(godotted.Get(persons, "0.Name"))
-	fmt.Println(godotted.Get(persons, "0.About.spaceship pilot"))
-	fmt.Println(godotted.Get(persons, "1.Age"))
-	fmt.Println(godotted.Get(persons, "1.About.powers.0"))
-	fmt.Println(godotted.Get(persons, "1.Height"))
-	fmt.Println(godotted.Get(persons, "2"))
+	fmt.Println(dipper.Get(persons, "0.Name"))
+	fmt.Println(dipper.Get(persons, "0.About.spaceship pilot"))
+	fmt.Println(dipper.Get(persons, "1.Age"))
+	fmt.Println(dipper.Get(persons, "1.About.powers.0"))
+	fmt.Println(dipper.Get(persons, "1.Height"))
+	fmt.Println(dipper.Get(persons, "2"))
 
 	// Output:
 	// Leela
 	// Also can drive cars
 	// 1025
 	// Psychic immunity
-	// godotted: field not found
-	// godotted: index out of range
+	// dipper: field not found
+	// dipper: index out of range
 }
 
 func ExampleGetMany() {
@@ -219,7 +220,7 @@ func ExampleGetMany() {
 		},
 	}
 
-	fields := godotted.GetMany(persons, []string{
+	fields := dipper.GetMany(persons, []string{
 		"0.Name",
 		"1.About.powers.0",
 		"1.Height",
@@ -232,7 +233,7 @@ func ExampleGetMany() {
 	// {
 	//   "0.Name": "Leela",
 	//   "1.About.powers.0": "Psychic immunity",
-	//   "1.Height": "godotted: field not found"
+	//   "1.Height": "dipper: field not found"
 	// }
 }
 
@@ -247,16 +248,16 @@ func ExampleSet() {
 		About: map[string]interface{}{},
 	}
 
-	fmt.Println(godotted.Set(&person, "Name", "Amy"))
-	fmt.Println(godotted.Set(&person, "Age", 21))
-	fmt.Println(godotted.Set(&person, "About.rich", true))
-	fmt.Println(godotted.Set(person, "", true))
+	fmt.Println(dipper.Set(&person, "Name", "Amy"))
+	fmt.Println(dipper.Set(&person, "Age", 21))
+	fmt.Println(dipper.Set(&person, "About.rich", true))
+	fmt.Println(dipper.Set(person, "", true))
 	fmt.Println(person)
 
 	// Output:
 	// <nil>
 	// <nil>
 	// <nil>
-	// godotted: field is unaddressable
+	// dipper: field is unaddressable
 	// {Amy 21 map[rich:true]}
 }

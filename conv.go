@@ -1,4 +1,4 @@
-package godotted
+package dipper
 
 // This file contains convenience functions using a default Dipper instance
 // prepared for dot-notation.

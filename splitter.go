@@ -1,4 +1,4 @@
-package godotted
+package dipper
 
 import "strings"
 

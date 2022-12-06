@@ -1,10 +1,11 @@
-package godotted_test
+package dipper_test
 
 import (
-	"godotted"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/flusflas/dipper"
 )
 
 type Publication struct {
@@ -115,7 +116,7 @@ func TestDipper_Get(t *testing.T) {
 				},
 				attribute: "bar.1",
 			},
-			want: godotted.ErrMapKeyNotString,
+			want: dipper.ErrMapKeyNotString,
 		},
 		{
 			name:      "map with dotted keys",
@@ -156,7 +157,7 @@ func TestDipper_Get(t *testing.T) {
 				obj:       getTestStruct(),
 				attribute: "foo",
 			},
-			want: godotted.ErrNotFound,
+			want: dipper.ErrNotFound,
 		},
 		{
 			name: "invalid index",
@@ -164,7 +165,7 @@ func TestDipper_Get(t *testing.T) {
 				obj:       getTestStruct(),
 				attribute: "Genres.a",
 			},
-			want: godotted.ErrInvalidIndex,
+			want: dipper.ErrInvalidIndex,
 		},
 		{
 			name: "index out of range",
@@ -172,7 +173,7 @@ func TestDipper_Get(t *testing.T) {
 				obj:       getTestStruct(),
 				attribute: "Genres.2",
 			},
-			want: godotted.ErrIndexOutOfRange,
+			want: dipper.ErrIndexOutOfRange,
 		},
 		{
 			name: "negative index",
@@ -180,20 +181,20 @@ func TestDipper_Get(t *testing.T) {
 				obj:       getTestStruct(),
 				attribute: "Genres.-1",
 			},
-			want: godotted.ErrIndexOutOfRange,
+			want: dipper.ErrIndexOutOfRange,
 		},
 		{
 			name: "unexported",
 			args: args{
-				obj:       getTestStruct(),
+				obj:       *getTestStruct(),
 				attribute: "Author.BirthDate.wall",
 			},
-			want: godotted.ErrUnexported,
+			want: dipper.ErrUnexported,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := godotted.New(godotted.Options{Separator: tt.separator})
+			d := dipper.New(dipper.Options{Separator: tt.separator})
 			got := d.Get(tt.args.obj, tt.args.attribute)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Get() = %v, want %v", got, tt.want)
@@ -211,7 +212,7 @@ func TestDipper_GetMany(t *testing.T) {
 		name      string
 		separator string // Default is "."
 		args      args
-		want      godotted.Fields
+		want      dipper.Fields
 	}{
 		{
 			name:      "struct",
@@ -234,10 +235,10 @@ func TestDipper_GetMany(t *testing.T) {
 					BirthDate: mustParseDate("1932-07-05"),
 				},
 				"Author->BirthDate":       mustParseDate("1932-07-05"),
-				"Name":                    godotted.ErrNotFound,
+				"Name":                    dipper.ErrNotFound,
 				"Publication->ISBN":       "1234567890",
 				"Genres->1":               "Crime",
-				"Author->BirthDate->wall": godotted.ErrUnexported,
+				"Author->BirthDate->wall": dipper.ErrUnexported,
 				"Extra->foo":              map[string]int{"bar": 123},
 			},
 		},
@@ -279,10 +280,10 @@ func TestDipper_GetMany(t *testing.T) {
 				"bar.1.1":         2000,
 				"bar.2.0.bye":     "adiós",
 				"bar.2.0.extra.2": 5.5,
-				"bar.3":           godotted.ErrIndexOutOfRange,
-				"bar.2.1.1":       godotted.ErrMapKeyNotString,
-				"foo.bar.value":   godotted.ErrNotFound,
-				"foo.x":           godotted.ErrNotFound,
+				"bar.3":           dipper.ErrIndexOutOfRange,
+				"bar.2.1.1":       dipper.ErrMapKeyNotString,
+				"foo.bar.value":   dipper.ErrNotFound,
+				"foo.x":           dipper.ErrNotFound,
 			},
 		},
 		{
@@ -315,7 +316,7 @@ func TestDipper_GetMany(t *testing.T) {
 				},
 			},
 			want: map[string]interface{}{
-				"foo": godotted.ErrNotFound,
+				"foo": dipper.ErrNotFound,
 			},
 		},
 		{
@@ -368,14 +369,14 @@ func TestDipper_GetMany(t *testing.T) {
 				"z": func() *int {
 					return nil
 				}(),
-				"y.a": godotted.ErrNotFound,
-				"z.a": godotted.ErrNotFound,
+				"y.a": dipper.ErrNotFound,
+				"z.a": dipper.ErrNotFound,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := godotted.New(godotted.Options{Separator: tt.separator})
+			d := dipper.New(dipper.Options{Separator: tt.separator})
 			got := d.GetMany(tt.args.obj, tt.args.attributes)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetMany() = %v, want %v", got, tt.want)
@@ -562,12 +563,12 @@ func TestDipper_Set(t *testing.T) {
 				v: map[string]int{
 					"foo": 123,
 				},
-				newValue: godotted.Delete,
+				newValue: dipper.Delete,
 			},
 			want: want{
 				result:   nil,
 				deleted:  true,
-				newValue: godotted.Delete,
+				newValue: dipper.Delete,
 			},
 		},
 		{
@@ -575,7 +576,7 @@ func TestDipper_Set(t *testing.T) {
 			args: args{
 				attribute: "1",
 				v:         []int{1, 2, 3},
-				newValue:  godotted.Delete,
+				newValue:  dipper.Delete,
 			},
 			want: want{
 				result:   nil,
@@ -587,7 +588,7 @@ func TestDipper_Set(t *testing.T) {
 			args: args{
 				attribute: "3",
 				v:         []interface{}{"1", 2, 3.0, 4 + 0i},
-				newValue:  godotted.Zero,
+				newValue:  dipper.Zero,
 			},
 			want: want{
 				result:   nil,
@@ -601,7 +602,7 @@ func TestDipper_Set(t *testing.T) {
 				v: &Book{
 					Title: "El nombre de la rosa",
 				},
-				newValue: godotted.Zero,
+				newValue: dipper.Zero,
 			},
 			want: want{
 				result:   nil,
@@ -629,7 +630,7 @@ func TestDipper_Set(t *testing.T) {
 				newValue:  "Sci-Fi",
 			},
 			want: want{
-				result: godotted.ErrIndexOutOfRange,
+				result: dipper.ErrIndexOutOfRange,
 			},
 		},
 		{
@@ -643,7 +644,7 @@ func TestDipper_Set(t *testing.T) {
 				newValue: 1980,
 			},
 			want: want{
-				result:   godotted.ErrNotFound,
+				result:   dipper.ErrNotFound,
 				newValue: 1980,
 			},
 		},
@@ -658,7 +659,7 @@ func TestDipper_Set(t *testing.T) {
 				newValue: 1980,
 			},
 			want: want{
-				result:   godotted.ErrUnaddressable,
+				result:   dipper.ErrUnaddressable,
 				newValue: 1980,
 			},
 		},
@@ -670,7 +671,7 @@ func TestDipper_Set(t *testing.T) {
 				newValue:  1980,
 			},
 			want: want{
-				result:   godotted.ErrUnaddressable,
+				result:   dipper.ErrUnaddressable,
 				newValue: 1980,
 			},
 		},
@@ -682,7 +683,7 @@ func TestDipper_Set(t *testing.T) {
 				newValue:  2 + 0i,
 			},
 			want: want{
-				result:   godotted.ErrUnaddressable,
+				result:   dipper.ErrUnaddressable,
 				newValue: 2 + 0i,
 			},
 		},
@@ -696,7 +697,7 @@ func TestDipper_Set(t *testing.T) {
 				newValue: 123,
 			},
 			want: want{
-				result:   godotted.ErrTypesDoNotMatch,
+				result:   dipper.ErrTypesDoNotMatch,
 				newValue: 123,
 			},
 		},
@@ -711,7 +712,7 @@ func TestDipper_Set(t *testing.T) {
 				newValue: "1980",
 			},
 			want: want{
-				result:   godotted.ErrTypesDoNotMatch,
+				result:   dipper.ErrTypesDoNotMatch,
 				newValue: "1980",
 			},
 		},
@@ -725,20 +726,20 @@ func TestDipper_Set(t *testing.T) {
 				newValue: "El nombre de la rosa",
 			},
 			want: want{
-				result: godotted.ErrMapKeyNotString,
+				result: dipper.ErrMapKeyNotString,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := godotted.New(godotted.Options{Separator: tt.separator})
+			d := dipper.New(dipper.Options{Separator: tt.separator})
 			got := d.Set(tt.args.v, tt.args.attribute, tt.args.newValue)
 			if !reflect.DeepEqual(got, tt.want.result) {
 				t.Errorf("Set() = %v, want %v", got, tt.want)
 			}
 			if tt.want.result == nil {
 				newValue := d.Get(tt.args.v, tt.args.attribute)
-				if tt.want.deleted && newValue != godotted.ErrNotFound {
+				if tt.want.deleted && newValue != dipper.ErrNotFound {
 					t.Errorf("Set() => Map value was not deleted")
 				}
 

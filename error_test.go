@@ -1,9 +1,10 @@
-package godotted_test
+package dipper_test
 
 import (
 	"fmt"
-	"godotted"
 	"testing"
+
+	"github.com/flusflas/dipper"
 )
 
 func TestFieldError_Error(t *testing.T) {
@@ -14,13 +15,13 @@ func TestFieldError_Error(t *testing.T) {
 	}{
 		{
 			name: "not found",
-			e:    godotted.ErrNotFound,
-			want: "godotted: field not found",
+			e:    dipper.ErrNotFound,
+			want: "dipper: field not found",
 		},
 		{
 			name: "unexported",
-			e:    godotted.ErrUnexported,
-			want: "godotted: field is unexported",
+			e:    dipper.ErrUnexported,
+			want: "dipper: field is unexported",
 		},
 	}
 	for _, tt := range tests {
@@ -55,13 +56,13 @@ func TestIsFieldError(t *testing.T) {
 		},
 		{
 			name: "field error",
-			arg:  godotted.ErrNotFound,
+			arg:  dipper.ErrNotFound,
 			want: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := godotted.IsFieldError(tt.arg); got != tt.want {
+			if got := dipper.IsFieldError(tt.arg); got != tt.want {
 				t.Errorf("IsFieldError() = %v, want %v", got, tt.want)
 			}
 		})
@@ -91,13 +92,13 @@ func TestError(t *testing.T) {
 		},
 		{
 			name: "field error",
-			arg:  godotted.ErrNotFound,
-			want: godotted.ErrNotFound,
+			arg:  dipper.ErrNotFound,
+			want: dipper.ErrNotFound,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := godotted.Error(tt.arg); got != tt.want {
+			if got := dipper.Error(tt.arg); got != tt.want {
 				t.Errorf("IsFieldError() = %v, want %v", got, tt.want)
 			}
 		})
@@ -107,7 +108,7 @@ func TestError(t *testing.T) {
 func TestFields_HasErrors(t *testing.T) {
 	tests := []struct {
 		name string
-		f    godotted.Fields
+		f    dipper.Fields
 		want bool
 	}{
 		{
@@ -122,7 +123,7 @@ func TestFields_HasErrors(t *testing.T) {
 			name: "one field error",
 			f: map[string]interface{}{
 				"x":   1,
-				"y.5": godotted.ErrIndexOutOfRange,
+				"y.5": dipper.ErrIndexOutOfRange,
 			},
 			want: true,
 		},
@@ -147,7 +148,7 @@ func TestFields_HasErrors(t *testing.T) {
 func TestFields_FirstError(t *testing.T) {
 	tests := []struct {
 		name string
-		f    godotted.Fields
+		f    dipper.Fields
 		want error
 	}{
 		{
@@ -162,9 +163,9 @@ func TestFields_FirstError(t *testing.T) {
 			name: "one field error",
 			f: map[string]interface{}{
 				"x":   1,
-				"y.5": godotted.ErrIndexOutOfRange,
+				"y.5": dipper.ErrIndexOutOfRange,
 			},
-			want: godotted.ErrIndexOutOfRange,
+			want: dipper.ErrIndexOutOfRange,
 		},
 		{
 			name: "one non-field error",
