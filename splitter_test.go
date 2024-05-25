@@ -40,6 +40,11 @@ func TestAttributeSplitter(t *testing.T) {
 			args: args{s: "", sep: "->"},
 			want: []string{""},
 		},
+		{
+			name: "06",
+			args: args{s: "a-->b", sep: "-->"},
+			want: []string{"a", "b"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
