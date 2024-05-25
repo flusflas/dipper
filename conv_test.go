@@ -75,7 +75,7 @@ func TestGetMany(t *testing.T) {
 					"Author.BirthDate",
 					"Name", // does not exist
 					"Publication.ISBN",
-					"Genres.1",
+					"GenreNames.1",
 					"Author.BirthDate.wall", // unexported field
 					"Extra.foo",
 				},
@@ -88,7 +88,7 @@ func TestGetMany(t *testing.T) {
 				"Author.BirthDate":      mustParseDate("1932-07-05"),
 				"Name":                  dipper.ErrNotFound,
 				"Publication.ISBN":      "1234567890",
-				"Genres.1":              "Crime",
+				"GenreNames.1":          "Crime",
 				"Author.BirthDate.wall": dipper.ErrUnexported,
 				"Extra.foo":             map[string]int{"bar": 123},
 			},
