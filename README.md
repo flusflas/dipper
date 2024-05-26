@@ -29,26 +29,26 @@ You can create a `Dipper` instance to customize the access options:
 
 ```go
 library := Library{
-    Address: "123 Fake Street",
-    Books: map[string]Book{
-        "Dune": {
-            Title:  "Dune",
-            Year:   1965,
-            Genres: []string{"Novel", "Science fiction", "Adventure"},
-        },
-        "Il nome della rosa": {
-            Title:  "Il nome della rosa",
-            Year:   1980,
-            Genres: []string{"Novel", "Mystery"},
-        },
-    },
+	Address: "123 Fake Street",
+	Books: []Book{
+		{
+			Title:  "Dune",
+			Year:   1965,
+			Genres: []string{"Novel", "Science fiction", "Adventure"},
+		},
+		{
+			Title:  "Il nome della rosa",
+			Year:   1980,
+			Genres: []string{"Novel", "Mystery"},
+		},
+	},
 }
 
 d := dipper.New(dipper.Options{Separator: "->"})
 
-book := d.Get(library, "Books->Dune")
+book := d.Get(library, "Books->1")
 if err := dipper.Error(book); err != nil {
-    return err
+	return err
 }
 ```
 
@@ -57,7 +57,7 @@ This is an example of how to get a nested value from an object:
 
 ```go
 
-field := dipper.Get(library, "Books.Dune.Genres.1")  // "Science fiction"
+field := dipper.Get(library, "Books[0].Genres[1]")  // "Science fiction"
 if err := dipper.Error(field); err != nil {
     return err
 }
@@ -68,25 +68,26 @@ You can also get multiple attributes at once:
 ```go
 fields := dipper.GetMany(library, []string{
     "Address",
-    "Books.Il nome della rosa.Year",
-    "Books.Dune.Author",
+    "Books[1].Year",
+    "Books[0].Author",
 })
 
 // fields => map[string]interface{}{
 //   "Address":                       "123 Fake Street",
-//   "Books.Il nome della rosa.Year": 1980,
-//   "Books.Dune.Author":             dipper.ErrNotFound,
+//   "Books.1.Year": 1980,
+//   "Books.0.Author":             dipper.ErrNotFound,
 // }
 
 if err := fields.FirstError(); err != nil {
-    return err  // Returns "dipper: not found"
+    //return err // Returns "dipper: not found"
 }
 ``` 
 
 Finally, you can also set values in addressable objects:
 
 ```go
-err := dipper.Set(&library, "Books.Dracula", Book{Year: 1897})
+// Replace book
+err := dipper.Set(&library, "Books.0", Book{Title: "1984", Year: 1949})
 ``` 
 
 There are two special values that can be used in `Set()`:
@@ -94,6 +95,55 @@ There are two special values that can be used in `Set()`:
 - `Delete`, to delete a map key. If the attribute is not a map value, the value
   will be zeroed.
 
+
+## Expression Syntax
+
+### Accessing Maps
+
+To access map values, use the map key directly with the separator notation:
+
+- `BookMap.Dune` to access the value associated with the key `"Dune"` in a map.
+
+### Accessing Structs
+
+To access struct fields, use the separator notation:
+
+- `Library.Address` to access the `Address` field of the `Library` struct.
+
+### Accessing Slices
+
+To access slice elements, you can use either the slice notation with square
+brackets or the separator notation:
+
+- `Books[0]` or `Books.0` to access the first element of the `Books` slice.
+
+### Filter Expressions
+
+Filter expressions allow you to query slices for elements that match specific
+conditions. They can be used both to get and set the value of the first matching
+element. The syntax is:
+
+```go
+// Get value with filter
+book = dipper.Get(library, "Books[Title='Il nome della rosa']")
+if err := dipper.Error(book); err != nil {
+    return err
+}
+
+// Get publication year
+year := dipper.Get(library, "Books[Title='Il nome della rosa'].Year")
+if err := dipper.Error(year); err != nil {
+    return err
+}
+```
+
+Any primitive types can be used: string (using simple quotes), integer, float
+and boolean. Some examples:
+- `Books[Title='Dune']`
+- `Books[Year=1949]`
+- `Books[Available=true]`
+
+Filter expressions currently only support the equality operator (`=` or `==`).
 
 ## Notes
 
