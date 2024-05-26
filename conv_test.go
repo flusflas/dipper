@@ -180,9 +180,9 @@ func ExampleGet() {
 	}
 
 	fmt.Println(dipper.Get(persons, "0.Name"))
-	fmt.Println(dipper.Get(persons, "0.About.spaceship pilot"))
+	fmt.Println(dipper.Get(persons, "[0].About.spaceship pilot"))
 	fmt.Println(dipper.Get(persons, "1.Age"))
-	fmt.Println(dipper.Get(persons, "1.About.powers.0"))
+	fmt.Println(dipper.Get(persons, "1.About.powers[0]"))
 	fmt.Println(dipper.Get(persons, "1.Height"))
 	fmt.Println(dipper.Get(persons, "2"))
 
@@ -222,7 +222,7 @@ func ExampleGetMany() {
 
 	fields := dipper.GetMany(persons, []string{
 		"0.Name",
-		"1.About.powers.0",
+		"1.About.powers[0]",
 		"1.Height",
 	})
 
@@ -232,7 +232,7 @@ func ExampleGetMany() {
 	// Output:
 	// {
 	//   "0.Name": "Leela",
-	//   "1.About.powers.0": "Psychic immunity",
+	//   "1.About.powers[0]": "Psychic immunity",
 	//   "1.Height": "dipper: field not found"
 	// }
 }

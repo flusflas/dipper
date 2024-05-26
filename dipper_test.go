@@ -163,6 +163,30 @@ func TestDipper_Get(t *testing.T) {
 			want: "Initial release",
 		},
 		{
+			name:      "map with empty key attributes",
+			separator: ".",
+			args: args{
+				obj: map[string]interface{}{
+					"": []int{1, 2, 3},
+				},
+				attribute: "[2]",
+			},
+			want: 3,
+		},
+		{
+			name:      "map with empty key attributes (nested)",
+			separator: ".",
+			args: args{
+				obj: map[string]interface{}{
+					"": map[string]interface{}{
+						"": []int{1, 2, 3},
+					},
+				},
+				attribute: ".[2]",
+			},
+			want: 3,
+		},
+		{
 			name: "get struct from slice",
 			args: args{
 				obj:       getTestStruct(),
@@ -195,6 +219,30 @@ func TestDipper_Get(t *testing.T) {
 				attribute: "1.x",
 			},
 			want: 1,
+		},
+		{
+			name: "slice using brackets notation from root",
+			args: args{
+				obj:       []int{1, 2, 3},
+				attribute: "[1]",
+			},
+			want: 2,
+		},
+		{
+			name: "slice using brackets notation",
+			args: args{
+				obj:       getTestStruct(),
+				attribute: "GenreNames[1]",
+			},
+			want: "Crime",
+		},
+		{
+			name: "slice using brackets notation after separator",
+			args: args{
+				obj:       getTestStruct(),
+				attribute: "GenreNames.[1]",
+			},
+			want: dipper.ErrInvalidIndex,
 		},
 		{
 			name: "not found",

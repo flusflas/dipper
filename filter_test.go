@@ -21,7 +21,7 @@ func TestDipper_GetWithFilter(t *testing.T) {
 			name: "get primitive value from slice with filter",
 			args: args{
 				obj:       getTestStruct(),
-				attribute: "GenreNames.[='Crime']",
+				attribute: "GenreNames[='Crime']",
 			},
 			want: "Crime",
 		},
@@ -29,7 +29,7 @@ func TestDipper_GetWithFilter(t *testing.T) {
 			name: "get primitive value from slice with filter using attribute name (error)",
 			args: args{
 				obj:       getTestStruct(),
-				attribute: "GenreNames.[Name='Crime']",
+				attribute: "GenreNames[Name='Crime']",
 			},
 			want: dipper.ErrFilterNotFound,
 		},
@@ -37,7 +37,7 @@ func TestDipper_GetWithFilter(t *testing.T) {
 			name: "get struct field from slice element with filter",
 			args: args{
 				obj:       getTestStruct(),
-				attribute: "Genres.[Name=='Crime'].Name",
+				attribute: "Genres[Name=='Crime'].Name",
 			},
 			want: "Crime",
 		},
@@ -45,7 +45,7 @@ func TestDipper_GetWithFilter(t *testing.T) {
 			name: "get map attribute value from slice element with filter",
 			args: args{
 				obj:       toJSONMap(getTestStruct()),
-				attribute: "genres.[name='Crime'].description",
+				attribute: "genres[name='Crime'].description",
 			},
 			want: "Narratives that centre on criminal acts and especially on the investigation of a crime, often a murder",
 		},
@@ -53,7 +53,7 @@ func TestDipper_GetWithFilter(t *testing.T) {
 			name: "get map attribute value from slice element with filter by integer value",
 			args: args{
 				obj:       getTestStruct(),
-				attribute: "Genres.[ID==0].Name",
+				attribute: "Genres[ID==0].Name",
 			},
 			want: "Mystery",
 		},
@@ -61,7 +61,7 @@ func TestDipper_GetWithFilter(t *testing.T) {
 			name: "get map attribute value from slice element with filter by float value",
 			args: args{
 				obj:       getTestStruct(),
-				attribute: "Genres.[ID=0.0].Name",
+				attribute: "Genres[ID=0.0].Name",
 			},
 			want: "Mystery",
 		},
@@ -101,7 +101,7 @@ func TestDipper_GetWithFilter(t *testing.T) {
 			name: "invalid filter expression",
 			args: args{
 				obj:       getTestStruct(),
-				attribute: "GenreNames.['Mystery']",
+				attribute: "GenreNames['Mystery']",
 			},
 			want: dipper.ErrInvalidIndex,
 		},
@@ -109,7 +109,7 @@ func TestDipper_GetWithFilter(t *testing.T) {
 			name: "invalid filter value",
 			args: args{
 				obj:       getTestStruct(),
-				attribute: "Genres.[ID={}]",
+				attribute: "Genres[ID={}]",
 			},
 			want: dipper.ErrInvalidFilterValue,
 		},
@@ -117,9 +117,17 @@ func TestDipper_GetWithFilter(t *testing.T) {
 			name: "invalid filter expression",
 			args: args{
 				obj:       getTestStruct(),
-				attribute: "GenreNames.[{}=]",
+				attribute: "GenreNames[*==]",
 			},
 			want: dipper.ErrInvalidFilterExpression,
+		},
+		{
+			name: "separator before filter expression",
+			args: args{
+				obj:       getTestStruct(),
+				attribute: "Genres.[ID=0].Name",
+			},
+			want: dipper.ErrInvalidIndex,
 		},
 	}
 	for _, tt := range tests {
@@ -155,7 +163,7 @@ func TestDipper_SetWithFilter(t *testing.T) {
 			name: "update string value in slice",
 			args: args{
 				v:         getTestStruct(),
-				attribute: "GenreNames.[='Mystery']",
+				attribute: "GenreNames[='Mystery']",
 				newValue:  "Romance",
 			},
 			want: want{
@@ -167,7 +175,7 @@ func TestDipper_SetWithFilter(t *testing.T) {
 		{
 			name: "update struct field",
 			args: args{
-				attribute: "Genres.[Name='Mystery'].Name",
+				attribute: "Genres[Name='Mystery'].Name",
 				v:         getTestStruct(),
 				newValue:  "Romance",
 			},
@@ -180,7 +188,7 @@ func TestDipper_SetWithFilter(t *testing.T) {
 		{
 			name: "update struct field with filter by integer field",
 			args: args{
-				attribute: "Genres.[ID=0.0].Name",
+				attribute: "Genres[ID=0.0].Name",
 				v:         getTestStruct(),
 				newValue:  "Romance",
 			},
@@ -193,7 +201,7 @@ func TestDipper_SetWithFilter(t *testing.T) {
 		{
 			name: "update map attribute",
 			args: args{
-				attribute: "genres.[id=0].name",
+				attribute: "genres[id=0].name",
 				v:         toJSONMap(getTestStruct()),
 				newValue:  "Romance",
 			},
@@ -206,7 +214,7 @@ func TestDipper_SetWithFilter(t *testing.T) {
 		{
 			name: "update map attribute with filter by float value",
 			args: args{
-				attribute: "genres.[id=0.0].name",
+				attribute: "genres[id=0.0].name",
 				v:         toJSONMap(getTestStruct()),
 				newValue:  "Romance",
 			},
