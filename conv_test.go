@@ -75,7 +75,7 @@ func TestGetMany(t *testing.T) {
 					"Author.BirthDate",
 					"Name", // does not exist
 					"Publication.ISBN",
-					"Genres.1",
+					"GenreNames.1",
 					"Author.BirthDate.wall", // unexported field
 					"Extra.foo",
 				},
@@ -88,7 +88,7 @@ func TestGetMany(t *testing.T) {
 				"Author.BirthDate":      mustParseDate("1932-07-05"),
 				"Name":                  dipper.ErrNotFound,
 				"Publication.ISBN":      "1234567890",
-				"Genres.1":              "Crime",
+				"GenreNames.1":          "Crime",
 				"Author.BirthDate.wall": dipper.ErrUnexported,
 				"Extra.foo":             map[string]int{"bar": 123},
 			},
@@ -180,9 +180,9 @@ func ExampleGet() {
 	}
 
 	fmt.Println(dipper.Get(persons, "0.Name"))
-	fmt.Println(dipper.Get(persons, "0.About.spaceship pilot"))
+	fmt.Println(dipper.Get(persons, "[0].About.spaceship pilot"))
 	fmt.Println(dipper.Get(persons, "1.Age"))
-	fmt.Println(dipper.Get(persons, "1.About.powers.0"))
+	fmt.Println(dipper.Get(persons, "1.About.powers[0]"))
 	fmt.Println(dipper.Get(persons, "1.Height"))
 	fmt.Println(dipper.Get(persons, "2"))
 
@@ -222,7 +222,7 @@ func ExampleGetMany() {
 
 	fields := dipper.GetMany(persons, []string{
 		"0.Name",
-		"1.About.powers.0",
+		"1.About.powers[0]",
 		"1.Height",
 	})
 
@@ -232,7 +232,7 @@ func ExampleGetMany() {
 	// Output:
 	// {
 	//   "0.Name": "Leela",
-	//   "1.About.powers.0": "Psychic immunity",
+	//   "1.About.powers[0]": "Psychic immunity",
 	//   "1.Height": "dipper: field not found"
 	// }
 }

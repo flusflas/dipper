@@ -1,6 +1,7 @@
 package dipper_test
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 	"time"
@@ -9,25 +10,46 @@ import (
 )
 
 type Publication struct {
-	ISBN string
+	ISBN string `json:"isbn"`
 }
 
 type Author struct {
-	Name      string
-	BirthDate time.Time
+	Name      string    `json:"name"`
+	BirthDate time.Time `json:"birth_date"`
+}
+
+type Genre struct {
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 type Book struct {
-	Title  string
-	Year   int
-	Author Author
-	Genres []string
-	Extra  map[interface{}]interface{}
-	Any    interface{}
+	Title      string                 `json:"title"`
+	Year       int                    `json:"year"`
+	Author     Author                 `json:"author"`
+	GenreNames []string               `json:"genre_names"`
+	Genres     []Genre                `json:"genres"`
+	Extra      map[string]interface{} `json:"extra"`
+	Any        interface{}            `json:"any"`
 	Publication
 }
 
 func intPtr(v int) *int { return &v }
+
+func toJSONMap(v interface{}) map[string]interface{} {
+	bytes, err := json.Marshal(v)
+	if err != nil {
+		panic(err)
+	}
+
+	m := make(map[string]interface{})
+	err = json.Unmarshal(bytes, &m)
+	if err != nil {
+		panic(err)
+	}
+	return m
+}
 
 func mustParseDate(date string) time.Time {
 	t, _ := time.Parse("2006-01-02", date)
@@ -42,8 +64,20 @@ func getTestStruct() *Book {
 			Name:      "Umberto Eco",
 			BirthDate: mustParseDate("1932-07-05"),
 		},
-		Genres: []string{"Mystery", "Crime"},
-		Extra: map[interface{}]interface{}{
+		GenreNames: []string{"Mystery", "Crime"},
+		Genres: []Genre{
+			{
+				ID:          0,
+				Name:        "Mystery",
+				Description: "Fiction genre where the nature of an event, usually a murder or other crime, remains mysterious until the end of the story",
+			},
+			{
+				ID:          1,
+				Name:        "Crime",
+				Description: "Narratives that centre on criminal acts and especially on the investigation of a crime, often a murder",
+			},
+		},
+		Extra: map[string]interface{}{
 			"foo": map[string]int{
 				"bar": 123,
 			},
@@ -65,7 +99,6 @@ func TestDipper_Get(t *testing.T) {
 		args      args
 		want      interface{}
 	}{
-
 		{
 			name: "empty attribute",
 			args: args{
@@ -105,7 +138,7 @@ func TestDipper_Get(t *testing.T) {
 		{
 			name: "map 3",
 			args: args{
-				obj: map[interface{}]interface{}{
+				obj: map[string]interface{}{
 					"foo": map[string]int{
 						"bar": 123,
 					},
@@ -130,10 +163,46 @@ func TestDipper_Get(t *testing.T) {
 			want: "Initial release",
 		},
 		{
-			name: "slice in struct",
+			name:      "map with empty key attributes",
+			separator: ".",
+			args: args{
+				obj: map[string]interface{}{
+					"": []int{1, 2, 3},
+				},
+				attribute: "[2]",
+			},
+			want: 3,
+		},
+		{
+			name:      "map with empty key attributes (nested)",
+			separator: ".",
+			args: args{
+				obj: map[string]interface{}{
+					"": map[string]interface{}{
+						"": []int{1, 2, 3},
+					},
+				},
+				attribute: ".[2]",
+			},
+			want: 3,
+		},
+		{
+			name: "get struct from slice",
 			args: args{
 				obj:       getTestStruct(),
 				attribute: "Genres.1",
+			},
+			want: Genre{
+				ID:          1,
+				Name:        "Crime",
+				Description: "Narratives that centre on criminal acts and especially on the investigation of a crime, often a murder",
+			},
+		},
+		{
+			name: "get field of struct from slice",
+			args: args{
+				obj:       getTestStruct(),
+				attribute: "Genres.1.Name",
 			},
 			want: "Crime",
 		},
@@ -150,6 +219,30 @@ func TestDipper_Get(t *testing.T) {
 				attribute: "1.x",
 			},
 			want: 1,
+		},
+		{
+			name: "slice using brackets notation from root",
+			args: args{
+				obj:       []int{1, 2, 3},
+				attribute: "[1]",
+			},
+			want: 2,
+		},
+		{
+			name: "slice using brackets notation",
+			args: args{
+				obj:       getTestStruct(),
+				attribute: "GenreNames[1]",
+			},
+			want: "Crime",
+		},
+		{
+			name: "slice using brackets notation after separator",
+			args: args{
+				obj:       getTestStruct(),
+				attribute: "GenreNames.[1]",
+			},
+			want: dipper.ErrInvalidIndex,
 		},
 		{
 			name: "not found",
@@ -224,7 +317,7 @@ func TestDipper_GetMany(t *testing.T) {
 					"Author->BirthDate",
 					"Name", // does not exist
 					"Publication->ISBN",
-					"Genres->1",
+					"GenreNames->1",
 					"Author->BirthDate->wall", // unexported field
 					"Extra->foo",
 				},
@@ -237,7 +330,7 @@ func TestDipper_GetMany(t *testing.T) {
 				"Author->BirthDate":       mustParseDate("1932-07-05"),
 				"Name":                    dipper.ErrNotFound,
 				"Publication->ISBN":       "1234567890",
-				"Genres->1":               "Crime",
+				"GenreNames->1":           "Crime",
 				"Author->BirthDate->wall": dipper.ErrUnexported,
 				"Extra->foo":              map[string]int{"bar": 123},
 			},
@@ -245,7 +338,7 @@ func TestDipper_GetMany(t *testing.T) {
 		{
 			name: "map",
 			args: args{
-				obj: map[interface{}]interface{}{
+				obj: map[string]interface{}{
 					"foo": map[string]int{
 						"bar": 123,
 					},
@@ -402,7 +495,6 @@ func TestDipper_Set(t *testing.T) {
 		args      args
 		want      want
 	}{
-
 		{
 			name: "update int value in struct",
 			args: args{
@@ -441,7 +533,7 @@ func TestDipper_Set(t *testing.T) {
 			args: args{
 				attribute: "Extra.1",
 				v: &Book{
-					Extra: map[interface{}]interface{}{
+					Extra: map[string]interface{}{
 						"1": "Rendezvous with Rama",
 					},
 				},

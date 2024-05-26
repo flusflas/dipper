@@ -33,6 +33,15 @@ const (
 	// ErrTypesDoNotMatch is the error returned from a set operation when an
 	// attribute references a value that has a different type than the new value.
 	ErrTypesDoNotMatch = fieldError("dipper: value type does not match field type")
+	// ErrInvalidFilterExpression is the error returned when the format of the
+	// given search expression is invalid.
+	ErrInvalidFilterExpression = fieldError("dipper: invalid search expression")
+	// ErrFilterNotFound is the error returned when a search expression does not
+	// match any entries.
+	ErrFilterNotFound = fieldError("dipper: no matches for filter expression")
+	// ErrInvalidFilterValue is the error returned when a search expression has an
+	// invalid value.
+	ErrInvalidFilterValue = fieldError("dipper: invalid value for filter expression")
 )
 
 // IsFieldError returns true when the given value is a fieldError.

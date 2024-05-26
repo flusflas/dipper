@@ -176,18 +176,16 @@ func getReflectValue(value reflect.Value, attribute string, sep string, toSet bo
 		sep = "."
 	}
 
+	splitter := newAttributeSplitter(attribute, sep)
+
 	var i, maxSetDepth int
 	if toSet {
-		maxSetDepth = strings.Count(attribute, sep)
+		maxSetDepth = splitter.CountRemaining() - 1
 	}
 
-	splitter := newAttributeSplitter(attribute, sep)
 	for splitter.HasMore() {
 		fieldName, i = splitter.Next()
-
-		if value.Kind() == reflect.Ptr || value.Kind() == reflect.Interface {
-			value = value.Elem()
-		}
+		value = getElemSafe(value)
 
 		switch value.Kind() {
 		case reflect.Map:
@@ -222,6 +220,26 @@ func getReflectValue(value reflect.Value, attribute string, sep string, toSet bo
 			value = value.FieldByName(fieldName)
 
 		case reflect.Slice, reflect.Array:
+			// Ignores field if it is the first one and it is empty. This
+			// happens when using brackets on a root slice (e.g. "[1].Name").
+			if i == 0 && fieldName == "" {
+				break
+			}
+
+			if strings.HasPrefix(fieldName, "[") && strings.HasSuffix(fieldName, "]") {
+				fieldName = fieldName[1 : len(fieldName)-1]
+
+				// Try to apply the filter to the slice elements
+				foundValue, err := filterSlice(value, fieldName)
+				if err != nil {
+					return value, "", err
+				}
+				if foundValue.IsValid() {
+					value = foundValue
+					break
+				}
+			}
+
 			sliceIndex, err := strconv.Atoi(fieldName)
 			if err != nil {
 				return value, "", ErrInvalidIndex
@@ -238,4 +256,18 @@ func getReflectValue(value reflect.Value, attribute string, sep string, toSet bo
 	}
 
 	return value, fieldName, nil
+}
+
+// getElemSafe returns the underlying value of an interface/pointer reflect.Value.
+func getElemSafe(v reflect.Value) reflect.Value {
+	switch v.Kind() {
+	case reflect.Ptr, reflect.Interface, reflect.Func, reflect.Chan, reflect.Map, reflect.Slice:
+		if v.IsNil() {
+			return v
+		}
+	}
+	if v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
+		v = v.Elem()
+	}
+	return v
 }
