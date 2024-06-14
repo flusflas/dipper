@@ -81,26 +81,27 @@ func filterSlice(value reflect.Value, fieldName string) (reflect.Value, error) {
 
 	// Iterates over the value elements and returns the first matching value
 	for i := 0; i < value.Len(); i++ {
-		item := getElemSafe(value.Index(i))
+		item := value.Index(i)
+		itemSafe := getElemSafe(item)
 
-		switch item.Kind() {
+		switch itemSafe.Kind() {
 		case reflect.Map:
-			for _, mapKey := range item.MapKeys() {
+			for _, mapKey := range itemSafe.MapKeys() {
 				if mapKey.String() != filterKey {
 					continue
 				}
 
-				if compareValues(item.MapIndex(mapKey)) {
+				if compareValues(itemSafe.MapIndex(mapKey)) {
 					return item, nil
 				}
 			}
 		case reflect.Struct:
-			for i := 0; i < item.NumField(); i++ {
-				if item.Type().Field(i).Name != filterKey {
+			for i := 0; i < itemSafe.NumField(); i++ {
+				if itemSafe.Type().Field(i).Name != filterKey {
 					continue
 				}
 
-				field := item.Field(i)
+				field := itemSafe.Field(i)
 				if compareValues(field) {
 					return item, nil
 				}
