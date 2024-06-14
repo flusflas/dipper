@@ -98,6 +98,16 @@ func TestDipper_GetWithFilter(t *testing.T) {
 			want: nil,
 		},
 		{
+			name: "slice of pointers should return a pointer",
+			args: args{
+				obj: []*Book{
+					getTestStruct(),
+				},
+				attribute: "[Year=1980]",
+			},
+			want: getTestStruct(),
+		},
+		{
 			name: "invalid filter expression",
 			args: args{
 				obj:       getTestStruct(),

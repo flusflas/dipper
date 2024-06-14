@@ -237,6 +237,16 @@ func TestDipper_Get(t *testing.T) {
 			want: "Crime",
 		},
 		{
+			name: "slice of pointers should return a pointer",
+			args: args{
+				obj: []*Book{
+					getTestStruct(),
+				},
+				attribute: "[0]",
+			},
+			want: getTestStruct(),
+		},
+		{
 			name: "slice using brackets notation after separator",
 			args: args{
 				obj:       getTestStruct(),
